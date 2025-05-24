@@ -17,34 +17,6 @@ const MessageInput = ({
 }) => {
     const fileInputRef = useRef(null);
     const isComposingRef = useRef(false);
-
-    const inputStyle = {
-        fontSize: '14px',
-        padding: '10px 14px',
-        border: '1px solid #e0e4e8',
-        borderRadius: '4px',
-        outline: 'none',
-        transition: 'border-color 0.2s',
-        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
-    };
-    
-    // 버튼 스타일 공통화
-    const buttonStyle = {
-        backgroundColor: '#4a6cf7',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '0 20px',
-        height: '40px',
-        fontSize: '14px',
-        fontWeight: '500',
-        cursor: 'pointer',
-        transition: 'background-color 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-    };
     
     return (
         <>
@@ -101,7 +73,7 @@ const MessageInput = ({
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                   style={{
-                    ...inputStyle,
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
                     backgroundColor: '#f8fafc',
                     border: '1px solid #e2e8f0',
                     borderRadius: '4px',
@@ -231,7 +203,23 @@ const MessageInput = ({
 
                   <button
                     onClick={handleUnifiedSend}
-                    style={{ ...buttonStyle, height: '80px' }}
+                    style={{
+                      backgroundColor: '#4a6cf7',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0 20px',
+                      height: '40px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      height: '80px'
+                    }}
                   >
                     전송
                   </button>

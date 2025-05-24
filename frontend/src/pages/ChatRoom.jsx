@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
@@ -9,6 +7,7 @@ import { FaCopy, FaTrashAlt } from 'react-icons/fa';
 import axiosInstance from '../components/api/axiosInstance';
 import MessageInput from '../components/chatroom/MessageInput';
 import MessageList from '../components/chatroom/MessageList';
+import useWebSocket from '../components/common/useWebSocket';
 const ChatRoom = () => {
 
   const { roomId, inviteCode } = useParams();
@@ -28,7 +27,6 @@ const ChatRoom = () => {
 
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-
 
   const [showNotification, setShowModal] = useState(false);
   const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false);
@@ -90,7 +88,6 @@ const ChatRoom = () => {
       setMenuOpen(false);
     }
   };
-
 
   useEffect(() => {
     if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
@@ -180,14 +177,71 @@ const ChatRoom = () => {
   const [errorMessage, setErrorMessage] = useState(null);
 
 
+  //웹소켓 연결
+  const stompClientRef = useWebSocket({
+    roomId,
+    onMessageReceived: (received)=> {
+      //메세지 상태 업데이트
+      setMessages(prev =>
+        prev.some(m => m.messageId === received.messageId)
+        ? prev.map(m => m.messageId === received.messageId ? received : m)
+        : [...prev, received]
+      );
+    }
+  });
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
   };
 
-  const stompClientRef = useRef(null);
-  const subscriptionRef = useRef(null);
-  const hasConnectedRef = useRef(false); // 실제 연결에 성공했는지 추적
-  const keepAliveIntervalRef = useRef(null); // 추가
+  // 메시지 초기화
+  const fetchMessages = async () => {
+    try {
+      const res = await axiosInstance.get(`/${roomId}/messages`);
+      const data = res.data;
+
+      const validatedData = data.map(msg => {
+        // 날짜 유효성 검사
+        if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+          msg = { ...msg, sendAt: new Date().toISOString() };
+        }
+
+        // isEdited와 isDeleted 속성이 undefined이면 기본값 설정
+        if (msg.edited === undefined) msg.edited = !!msg.isEdited;
+        if (msg.deleted === undefined) msg.deleted = !!msg.isDeleted;
+
+        return msg;
+      });
+
+      const sortedData = validatedData.sort(
+          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+      );
+
+      setMessages(sortedData);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  // 로그인 유저 정보 가져오기
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/user/details', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('로그인 정보를 가져오지 못했습니다.');
+      }
+
+      const user = await res.json(); // { id, email, nickname, profileImg }
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('사용자 정보 요청 실패:', error);
+    }
+  };
 
   useEffect(() => {
     if (!roomId) {
@@ -198,156 +252,11 @@ const ChatRoom = () => {
 
     setMessages([]); // 이전 채팅방 메세지 제거
 
-    // 로그인 유저 정보 가져오기
-    const fetchCurrentUser = async () => {
-      try {
-        const res = await fetch('http://localhost:8080/user/details', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        });
-
-        if (!res.ok) {
-          throw new Error('로그인 정보를 가져오지 못했습니다.');
-        }
-
-        const user = await res.json(); // { id, email, nickname, profileImg }
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('사용자 정보 요청 실패:', error);
-      }
-    };
-
     fetchCurrentUser();
     fetchRoomInfo(); // 방 정보 가져오기 함수 호출 추가
-
-    // 메시지 초기화
-    const fetchMessages = async () => {
-      try {
-        const res = await axiosInstance.get(`/${roomId}/messages`);
-        const data = res.data;
-
-        const validatedData = data.map(msg => {
-          // 날짜 유효성 검사
-          if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-            msg = { ...msg, sendAt: new Date().toISOString() };
-          }
-
-          // isEdited와 isDeleted 속성이 undefined이면 기본값 설정
-          if (msg.edited === undefined) msg.edited = !!msg.isEdited;
-          if (msg.deleted === undefined) msg.deleted = !!msg.isDeleted;
-
-          return msg;
-        });
-
-        const sortedData = validatedData.sort(
-            (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-        );
-
-        setMessages(sortedData);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-      }
-    };
-
     fetchMessages();
 
-    // WebSocket 연결 설정
-    const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      reconnectDelay: 1000,
-      heartbeatIncoming: 15000,
-      heartbeatOutgoing: 10000,
-      debug: (str) => console.log(`[STOMP] ${str}`),
-
-      onConnect: () => {
-        console.log('✅ Connected to WebSocket');
-        hasConnectedRef.current = true;
-
-        if (subscriptionRef.current) {
-          subscriptionRef.current.unsubscribe();
-          console.log("🔁 Previous subscription cleared.");
-        }
-
-        subscriptionRef.current = client.subscribe(`/topic/chat/${roomId}`, (message) => {
-          try {
-            const received = JSON.parse(message.body);
-            received.sendAt ||= new Date().toISOString();
-            
-            // isEdited와 isDeleted 속성을 편집 및 삭제 상태로 변환
-            if (received.isEdited !== undefined) received.edited = received.isEdited;
-            if (received.isDeleted !== undefined) received.deleted = received.isDeleted;
-            
-            setMessages(prev =>
-              prev.some(m => m.messageId === received.messageId)
-                ? prev.map(m => m.messageId === received.messageId ? received : m)
-                : [...prev, received]
-            );
-          } catch (e) {
-            console.error("📛 Failed to parse incoming message", e);
-          }
-        });
-
-        if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
-
-        keepAliveIntervalRef.current = setInterval(() => {
-          if (client && client.connected) {
-            client.publish({
-              destination: '/app/ping',
-              body: 'ping'
-            });
-            console.log("📡 Sent keep-alive ping");
-          }
-        }, 20000);
-      },
-
-      onWebSocketClose: async () => {
-        try {
-          const res = await fetch('http://localhost:8080/auth', {
-            credentials: "include"
-          });
-
-          if (res.status === 401) {
-            console.warn("세션 만료 → 로그인 페이지로 이동");
-            window.location.href = '/login';
-          }
-        } catch (err) {
-          console.warn("네트워크 오류 → 로그인 페이지로 이동", err);
-          window.location.href = '/login';
-        }
-      },
-
-      onStompError: (frame) => {
-        console.error("💥 STOMP error:", frame.headers['message']);
-        if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
-          navigate("/login");
-        }
-      }
-    });
-
-    client.activate();
-    stompClientRef.current = client;
-
-    return () => {
-      console.log("🧹 Cleaning up WebSocket...");
-
-      if (keepAliveIntervalRef.current) {
-        clearInterval(keepAliveIntervalRef.current);
-        keepAliveIntervalRef.current = null;
-        console.log("🔕 Stopped keep-alive ping");
-      }
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
-        console.log("🔌 Subscription unsubscribed.");
-      }
-      if (client && client.active) {
-        client.deactivate().then(() => {
-          console.log("🛑 Disconnected from WebSocket");
-        });
-      }
-    };
-  }, [roomId, navigate]);
+  },[roomId]);
 
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
@@ -430,39 +339,9 @@ const ChatRoom = () => {
     }
   };
 
-
-  // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수 (수정됨)
-  // const formatDate = (dateString) => {
-  //   try {
-  //     const date = new Date(dateString);
-
-  //     // 유효한 날짜인지 확인 (1970년은 유효하지 않은 것으로 간주)
-  //     if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
-  //       return new Date().toLocaleDateString('ko-KR', {
-  //         year: 'numeric',
-  //         month: '2-digit',
-  //         day: '2-digit'
-  //       });
-  //     }
-
-  //     return date.toLocaleDateString('ko-KR', {
-  //       year: 'numeric',
-  //       month: '2-digit',
-  //       day: '2-digit'
-  //     });
-  //   } catch (error) {
-  //     console.error('날짜 형식 변환 오류:', error);
-  //     return new Date().toLocaleDateString('ko-KR', {
-  //       year: 'numeric',
-  //       month: '2-digit',
-  //       day: '2-digit'
-  //     });
-  //   }
-  // };
-
   const [imageFile, setImageFile] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
-  const fileInputRef = useRef(null);
+  // const fileInputRef = useRef(null);
 
   // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
   const handleUnifiedSend = async () => {
@@ -497,17 +376,6 @@ const ChatRoom = () => {
     } else {
       sendMessage();
     }
-  };
-
-  // 입력 필드 스타일 공통화
-  const inputStyle = {
-    fontSize: '14px',
-    padding: '10px 14px',
-    border: '1px solid #e0e4e8',
-    borderRadius: '4px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
   };
 
   const handleEditMessage = (messageId) => {
@@ -633,7 +501,6 @@ const ChatRoom = () => {
                   }
                 }}
                 style={{
-                  ...inputStyle,
                   width: '220px',
                   backgroundColor: '#f9fafc',
                   fontSize: '14px'
