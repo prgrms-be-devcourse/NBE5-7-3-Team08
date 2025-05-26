@@ -103,7 +103,7 @@ const useWebSocket = ({
                 });
             }
         };
-        }, [roomId, navigate]);
+    }, [roomId]);
 
     return stompClientRef;
 };
