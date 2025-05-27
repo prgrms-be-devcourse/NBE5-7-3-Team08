@@ -82,14 +82,20 @@
 ## 🛢️ERD
 ![image](https://github.com/user-attachments/assets/d84700d9-3e1b-476f-b3c8-aff4712cca61)
 
-## Flow Chart
+<br>
+
+## 🔀Flow Chart
 ![image](https://github.com/user-attachments/assets/ce20f766-e6e0-4ca8-a9b5-568af69ed073)
 
-## API 명세
+<br>
+
+## 🧾API 명세
 Swagger를 사용하여 API명세서를 제작 <br>
 ![image](https://github.com/user-attachments/assets/d3867fcc-1198-4908-946a-6ecb98ed3a6b)
 *Swagger명세 개요 이미지*
 
-## 시스템 구성도
+<br>
+
+## 🌐시스템 구성도
 ![시스템 구성도  8팀_2차 팀프로젝트](https://github.com/user-attachments/assets/4d0eb7ed-9255-489e-88ff-3ebd6354c0e8)
 배포환경 시스템 구성도 업데이트 예정
