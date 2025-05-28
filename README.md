@@ -69,7 +69,7 @@
 # 👯역할 분담
 |이 름|GitHub|역할|
 |:---:|---|---|
-|[TL]배문성|[gitHub](https://github.com/heets-blue)|-**문서**: 리드미, 와이어프레임 <br> -**기능**: 로그인/회원가입, OAuth 로그인, JWT 토큰 인증, axios 인터셉터, 회원CRUD 기능, 회원정보 수정|
+|[TL]배문성|[gitHub](https://github.com/heets-blue)|-**문서**: 리드미, 와이어프레임 <br> -**기능**: 로그인/회원가입, OAuth 로그인, JWT 토큰 인증, axios 인터셉터, 회원CRUD 기능, 회원정보 수정, 배포|
 |임강현|[gitHub](https://github.com/LimKangHyun)|-**문서**: 시스템 구성도, 플로우차트  <br>   -**기능**: 메시지 비동기 처리, 채팅 검색, 성능 최적화|                                
 |임창인|[gitHub](https://github.com/cba700)|-**문서**: 발표자료 <br>-**기능**: 채팅방 생성,초대,입장 구현, url 보안 강화|
 |남지은|[gitHub](https://github.com/zie-ning)|-**문서**: 기획서 <br>-**기능**: 웹소켓을 통한 실시간 통신 구현, 깃허브 이벤트 메세지 제작|
