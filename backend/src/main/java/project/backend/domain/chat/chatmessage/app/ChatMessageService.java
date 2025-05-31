@@ -26,21 +26,17 @@ import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
-import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
 import project.backend.domain.member.app.MemberService;
-import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.errorcode.ChatMessageErrorCode;
+import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.ex.AuthException;
 import project.backend.global.exception.ex.ChatMessageException;
 import project.backend.global.exception.ex.ChatRoomException;
-import project.backend.global.exception.ex.MemberException;
-import project.backend.global.exception.errorcode.ChatRoomErrorCode;
-import project.backend.global.exception.errorcode.MemberErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -63,19 +59,19 @@ public class ChatMessageService {
 
 		ChatRoom room = chatRoomService.getRoomById(roomId);
 
-		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
-				sender, room)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
+//		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
+//				sender, room)
+//			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
 		ChatMessage message;
 
 		if (request.getType().equals(MessageType.IMAGE) && request.getImageFileId() != null) {
 			ImageFile findImage = imageFileService.getImageById(request.getImageFileId());
-			message = messageMapper.toEntityWithImage(room, participant, findImage);
+			message = messageMapper.toEntityWithImage(room, sender, findImage);
 		} else if (request.getType().equals(MessageType.TEXT)) {
-			message = messageMapper.toEntityWithText(room, participant, request);
+			message = messageMapper.toEntityWithText(room, sender, request);
 		} else if (request.getType().equals(MessageType.CODE)) {
-			message = messageMapper.toEntityWithCode(room, participant, request);
+			message = messageMapper.toEntityWithCode(room, sender, request);
 		} else {
 			throw new ChatMessageException(ChatMessageErrorCode.INVALID_ROUTE);
 		}
@@ -140,7 +136,7 @@ public class ChatMessageService {
 		ChatMessage message = chatMessageRepository.findById(request.messageId())
 			.orElseThrow(() -> new ChatMessageException(ChatMessageErrorCode.MESSAGE_NOT_FOUND));
 
-		if (!message.getSender().getParticipant().getEmail().equals(email)) {
+		if (!message.getSender().getEmail().equals(email)) {
 			throw new AuthException(AuthErrorCode.FORBIDDEN_MESSAGE_EDIT);
 		}
 
@@ -174,7 +170,7 @@ public class ChatMessageService {
 		ChatMessage message = chatMessageRepository.findById(messageId)
 			.orElseThrow(() -> new ChatMessageException(ChatMessageErrorCode.MESSAGE_NOT_FOUND));
 
-		if (!message.getSender().getParticipant().getEmail().equals(email)) {
+		if (!message.getSender().getEmail().equals(email)) {
 			throw new AuthException(AuthErrorCode.FORBIDDEN_MESSAGE_DELETE);
 		}
 
