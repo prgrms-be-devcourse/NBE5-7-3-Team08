@@ -54,7 +54,6 @@ public class ChatMessageService {
 	public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
 
 		Member sender = memberService.getMemberByEmail(email);
-
 		ChatRoom room = chatRoomService.getRoomById(roomId);
 
 //		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
@@ -152,10 +151,7 @@ public class ChatMessageService {
 				});
 		}
 
-		ChatMessageResponse response = messageMapper.toResponse(message);
-		response.setEdited(true);
-
-		return response;
+		return messageMapper.toResponse(message);
 	}
 
 	@Transactional
@@ -179,10 +175,7 @@ public class ChatMessageService {
 				.ifPresent(ChatMessageSearch::deleteContent);
 		}
 
-		ChatMessageResponse response = messageMapper.toResponse(message);
-		response.setDeleted(true);
-
-		return response;
+		return messageMapper.toResponse(message);
 	}
 
 	// 예외 처리

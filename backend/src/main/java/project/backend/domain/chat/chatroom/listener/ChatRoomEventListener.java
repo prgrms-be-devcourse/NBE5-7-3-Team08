@@ -36,9 +36,6 @@ public class ChatRoomEventListener {
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleMemberJoin(JoinChatRoomEvent joinEvent) {
 		ChatRoom chatRoom = chatRoomService.getRoomById(joinEvent.roomId());
-//		ChatParticipant participant = getParticipantByRoomAndMember(joinEvent.roomId(),
-//			joinEvent.memberId());
-
 		Member member = memberService.getMemberById(joinEvent.memberId());
 
 		ChatMessage message = chatMessageMapper.toEntityWithEvent(chatRoom, member, joinEvent);

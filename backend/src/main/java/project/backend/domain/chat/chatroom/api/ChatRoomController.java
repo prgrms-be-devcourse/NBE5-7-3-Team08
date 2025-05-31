@@ -29,7 +29,6 @@ import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
-import project.backend.domain.member.app.MemberService;
 import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
@@ -41,7 +40,6 @@ import project.backend.global.exception.ex.AuthException;
 public class ChatRoomController {
 
 	private final ChatRoomService chatRoomService;
-	private final MemberService memberService;
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)

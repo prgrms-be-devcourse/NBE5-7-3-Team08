@@ -65,14 +65,11 @@ public class GitMessageService {
 
 	private void sendGitMessage(ChatRoom room, GitMessageDto gitMessage) {
 		Member githubBot = memberService.getMemberByEmail(githubEmailKey);
-//		ChatParticipant gitParticipant = chatParticipantRepository.findByParticipantAndChatRoom(
-//				githubBot, room)
-//			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
 		ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage, githubBot);
 		chatMessageRepository.save(message);
-		ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
 
+		ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
 		messagingTemplate.convertAndSend("/topic/chat/" + room.getId(), response);
 	}
 
