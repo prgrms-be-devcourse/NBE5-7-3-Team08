@@ -28,11 +28,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
-import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.global.config.security.dto.MemberDetails;
+import project.backend.global.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
 
