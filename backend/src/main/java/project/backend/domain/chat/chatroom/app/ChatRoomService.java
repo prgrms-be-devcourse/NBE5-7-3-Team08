@@ -115,13 +115,13 @@ public class ChatRoomService {
 
 	@Transactional(readOnly = true)
 	public Long getMostRecentRoomId(Long memberId) {
-		ChatRoom room = memberService.getMemberById(memberId).getMemberStatus().getRoom();
+		Long roomId = memberService.getMemberById(memberId).getMemberStatus().getRoomId();
 
 		// 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
-		if (room == null) {
+		if (roomId == null) {
 			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST);
 		}
-		return room.getId();
+		return roomId;
 	}
 
 	@Transactional(readOnly = true)
@@ -189,8 +189,7 @@ public class ChatRoomService {
 
 	@Transactional
 	public void moveRoom(Long memberId, Long roomId) {
-		ChatRoom room = getRoomById(roomId);
-		memberService.getMemberById(memberId).getMemberStatus().setRoom(room);
+		memberService.getMemberById(memberId).getMemberStatus().setRoomId(roomId);
 	}
 }
 

@@ -9,7 +9,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
 
 @Entity
 @Getter
@@ -24,10 +23,8 @@ public class MemberStatus {
 	@JoinColumn(name = "member_id")
 	private Member member;
 
-	@OneToOne
-	@JoinColumn(name = "room_id")
 	@Setter
-	private ChatRoom room;
+	private Long roomId;
 
 	public MemberStatus(Member member) {
 		this.member = member;
