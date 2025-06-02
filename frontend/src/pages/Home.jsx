@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../components/api/axiosInstance';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -8,22 +8,7 @@ const Home = () => {
 
   useEffect(() => {
 
-    axios.get(`http://localhost:8080/auth`, {
-      withCredentials: true,
-    })
-      .catch(err => {
-        const status = err.response?.status;
-        if(status===401) {
-          navigate("/login")
-        } else {
-          console.error("에러 발생", err);
-          navigate("/login")
-        }
-      })
-
-    axios.get(`http://localhost:8080/chat-rooms/recent`, { 
-        withCredentials: true,
-
+    axiosInstance.get(`/chat-rooms/recent`, { 
     })
       .then(res => {
         const roomId = res.data.roomId;
@@ -40,8 +25,6 @@ const Home = () => {
         const status = err.response?.status;
         if (status === 404) {
           navigate('/blank'); // 참여 중인 채팅방 없음
-        } else if (status === 401) {
-          navigate('/login'); // 인증 필요
         } else {
           console.error('채팅방 이동 실패:', status);
           alert(err);

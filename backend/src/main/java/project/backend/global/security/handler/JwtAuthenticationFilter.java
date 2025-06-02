@@ -29,8 +29,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtProvider jwtProvider;
 
 	private static final List<String> WHITE_LIST = List.of(
-		"/token/sync",
-		"/signup"
+		"/signup",
+		"/login"
 	);
 
 	@Override
@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		String uri = request.getRequestURI();
 
-		if (uri.equals("/token/sync")) {
+		if (WHITE_LIST.contains(uri)) {
 			filterChain.doFilter(request, response); // JWT 검사 건너뜀
 			return;
 		}
@@ -52,6 +52,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			String token = accessToken.get().getValue();
 
 			log.info("request.getRequestURI() = {}", request.getRequestURI());
+
+			if (uri.equals("/token/sync")) {
+				tryTokenSync(request, response, filterChain, token);
+				return;
+			}
+
 			TokenStatus tokenStatus = jwtProvider.validateAccessToken(token);
 
 			switch (tokenStatus) {
@@ -61,7 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					SecurityContextHolder.getContext().setAuthentication(authentication);
 				}
 				case EXPIRED -> {
-
 					log.info("[JWT] 토큰 만료됨. 재발급 시도");
 					Authentication authentication = jwtProvider.replaceAccessToken(response,
 						token);
@@ -79,5 +84,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		filterChain.doFilter(request, response);
+	}
+
+	private void tryTokenSync(HttpServletRequest request,
+		HttpServletResponse response,
+		FilterChain filterChain, String token) throws ServletException, IOException {
+
+		TokenStatus tokenStatus = jwtProvider.validateAccessToken(token);
+
+		if (tokenStatus == TokenStatus.VALID || tokenStatus == TokenStatus.EXPIRED) {
+			Authentication authentication = jwtProvider.getAuthentication(token);
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+			filterChain.doFilter(request, response);
+
+		}
+
+		SecurityContextHolder.clearContext();
 	}
 }

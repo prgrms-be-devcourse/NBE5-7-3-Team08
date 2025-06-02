@@ -5,23 +5,50 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-axiosInstance.interceptors.request.use(async (config) => {
-  if (config.url === '/auth') return config; // /auth 요청 자체는 검사 X
+let isSyncing = false;
+let syncQueue = [];
 
-  try {
-    const authCheck = await axios.get('http://localhost:8080/auth', {
-      withCredentials: true,
-    });
-    if (authCheck.status === 200) {
-      return config; // 통과 시 요청 진행
+const processSyncQueue = (error = null) => {
+  syncQueue.forEach(({ resolve, reject }) => {
+    error ? reject(error) : resolve();
+  });
+  syncQueue = [];
+};
+
+axiosInstance.interceptors.response.use(
+  response => response,
+  async error => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      console.log("다시!")
+      if (isSyncing) {
+        return new Promise((resolve, reject) => {
+          syncQueue.push({ resolve: () => resolve(axiosInstance(originalRequest)), reject });
+        });
+      }
+
+      isSyncing = true;
+
+      try {
+        // 🎯 최신 토큰만 재설정 받기
+        await axios.get('/token/sync', { withCredentials: true });
+        processSyncQueue();
+        return axiosInstance(originalRequest); // 재시도
+      } catch (syncErr) {
+        processSyncQueue(syncErr);
+        alert(syncErr);
+        window.location.href = '/login';
+        return Promise.reject(syncErr);
+      } finally {
+        isSyncing = false;
+      }
     }
-  } catch (err) {
-    console.warn('토큰 검사 실패 → 로그인 페이지로 이동');
-    window.location.href = '/login';
-    throw new axios.Cancel('인증 실패로 요청 취소됨'); // 요청 중단
+
+    return Promise.reject(error);
   }
-}, (error) => {
-  return Promise.reject(error);
-});
+);
+
 
 export default axiosInstance;
