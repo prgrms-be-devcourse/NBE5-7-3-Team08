@@ -6,17 +6,16 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import project.backend.global.exception.errorcode.TokenErrorCode;
+import project.backend.global.exception.ex.JwtException;
 import project.backend.global.security.app.CookieUtils;
 import project.backend.global.security.jwt.JwtProvider;
 import project.backend.global.security.jwt.TokenStatus;
@@ -38,67 +37,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		FilterChain filterChain)
 		throws ServletException, IOException {
 
-		String uri = request.getRequestURI();
-
-		if (WHITE_LIST.contains(uri)) {
+		if (WHITE_LIST.contains(request.getRequestURI())) {
 			filterChain.doFilter(request, response); // JWT 검사 건너뜀
 			return;
 		}
 
-		Optional<Cookie> accessToken = CookieUtils.getCookie(request,
-			"accessToken");
+		log.info("JWT필터 도달 = {}", request.getRequestURI());
 
-		if (accessToken.isPresent()) {
-			String token = accessToken.get().getValue();
+		Cookie cookie = CookieUtils.getCookie(request,
+			"accessToken").orElseThrow(() -> new JwtException(TokenErrorCode.INVALID_TOKEN));
+		String accessToken = cookie.getValue();
 
-			log.info("request.getRequestURI() = {}", request.getRequestURI());
+		TokenStatus tokenStatus = jwtProvider.validateAccessToken(accessToken);
 
-			if (uri.equals("/token/sync")) {
-				tryTokenSync(request, response, filterChain, token);
-				return;
-			}
+		if (tokenStatus == TokenStatus.VALID) {
+			log.info("[JWT] 유효한 토큰");
+			Authentication authentication = jwtProvider.getAuthentication(accessToken);
+			SecurityContextHolder.getContext().setAuthentication(authentication);
 
-			TokenStatus tokenStatus = jwtProvider.validateAccessToken(token);
-
-			switch (tokenStatus) {
-				case VALID -> {
-					log.info("[JWT] 유효한 토큰");
-					Authentication authentication = jwtProvider.getAuthentication(token);
-					SecurityContextHolder.getContext().setAuthentication(authentication);
-				}
-				case EXPIRED -> {
-					log.info("[JWT] 토큰 만료됨. 재발급 시도");
-					Authentication authentication = jwtProvider.replaceAccessToken(response,
-						token);
-					if (authentication != null) {
-						log.info("토큰 재발급 성공");
-						SecurityContextHolder.getContext().setAuthentication(authentication);
-					}
-				}
-				default -> {
-					log.warn("JWT 토큰 인증 처리 불가: {}", token);
-					log.warn("재로그인 필요");
-					SecurityContextHolder.clearContext();
-				}
-			}
+		} else {
+			SecurityContextHolder.clearContext();
 		}
 
 		filterChain.doFilter(request, response);
 	}
 
-	private void tryTokenSync(HttpServletRequest request,
-		HttpServletResponse response,
-		FilterChain filterChain, String token) throws ServletException, IOException {
-
-		TokenStatus tokenStatus = jwtProvider.validateAccessToken(token);
-
-		if (tokenStatus == TokenStatus.VALID || tokenStatus == TokenStatus.EXPIRED) {
-			Authentication authentication = jwtProvider.getAuthentication(token);
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			filterChain.doFilter(request, response);
-
-		}
-
-		SecurityContextHolder.clearContext();
-	}
 }

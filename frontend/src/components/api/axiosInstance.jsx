@@ -33,7 +33,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         // 🎯 최신 토큰만 재설정 받기
-        await axios.get('/token/sync', { withCredentials: true });
+        await axios.get('/token/sync');
         processSyncQueue();
         return axiosInstance(originalRequest); // 재시도
       } catch (syncErr) {
