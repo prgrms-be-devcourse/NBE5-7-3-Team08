@@ -26,9 +26,8 @@ const Home = () => {
         if (status === 404) {
           navigate('/blank'); // 참여 중인 채팅방 없음
         } else {
-          console.error('채팅방 이동 실패:', status);
-          alert(err);
-
+          const message = err.response?.data?.message || '채팅방 조회 실패패';
+          alert(message); 
         }
       })
       .finally(() => {

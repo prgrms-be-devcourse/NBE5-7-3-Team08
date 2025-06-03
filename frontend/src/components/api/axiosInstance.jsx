@@ -1,54 +1,64 @@
+// axiosInstance.js
 import axios from 'axios';
 
-const axiosInstance = axios.create({
+// Axios 인스턴스 생성
+const instance = axios.create({
   baseURL: 'http://localhost:8080',
   withCredentials: true,
 });
 
-let isSyncing = false;
-let syncQueue = [];
+// ✅ 재발급 Promise (동시 요청 막기용)
+let isRefreshing = false;
+let refreshSubscribers = [];
 
-const processSyncQueue = (error = null) => {
-  syncQueue.forEach(({ resolve, reject }) => {
-    error ? reject(error) : resolve();
-  });
-  syncQueue = [];
+const onRefreshed = () => {
+  refreshSubscribers.forEach(callback => callback());
+  refreshSubscribers = [];
 };
 
-axiosInstance.interceptors.response.use(
-  response => response,
-  async error => {
-    const originalRequest = error.config;
+const addRefreshSubscriber = (callback) => {
+  refreshSubscribers.push(callback);
+};
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+// ✅ 응답 인터셉터
+// ✅ 재요청을 큐에 담았다가 refresh가 끝나고 다시 실행
+instance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { config, response } = error;
+    const originalRequest = config;
+
+    if (response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.log("다시!")
-      if (isSyncing) {
-        return new Promise((resolve, reject) => {
-          syncQueue.push({ resolve: () => resolve(axiosInstance(originalRequest)), reject });
+      originalRequest.withCredentials = true;
+
+      return new Promise((resolve, reject) => {
+        addRefreshSubscriber(() => {
+          resolve(instance(originalRequest));
         });
-      }
 
-      isSyncing = true;
+        if (!isRefreshing) {
+          isRefreshing = true;
 
-      try {
-        // 🎯 최신 토큰만 재설정 받기
-        await axios.get('/token/sync');
-        processSyncQueue();
-        return axiosInstance(originalRequest); // 재시도
-      } catch (syncErr) {
-        processSyncQueue(syncErr);
-        alert(syncErr);
-        window.location.href = '/login';
-        return Promise.reject(syncErr);
-      } finally {
-        isSyncing = false;
-      }
+          axios.get('http://localhost:8080/token/refresh', {
+            withCredentials: true,
+          })
+            .then(() => {
+              onRefreshed(); // 모든 구독된 요청 실행
+            })
+            .catch((refreshError) => {
+              window.location.replace('/login');
+              reject(refreshError);
+            })
+            .finally(() => {
+              isRefreshing = false;
+            });
+        }
+      });
     }
 
     return Promise.reject(error);
   }
 );
 
-
-export default axiosInstance;
+export default instance;
