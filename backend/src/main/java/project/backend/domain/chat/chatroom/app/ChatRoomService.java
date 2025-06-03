@@ -202,8 +202,14 @@ public class ChatRoomService {
 	}
 
 	@Transactional(readOnly = true)
-	public ChatRoomNameResponse getChatRoomByInviteCode(String inviteCode) {
+	public ChatRoomNameResponse getChatRoomDetails(String inviteCode,Long memberId) {
 		ChatRoom room = findByInviteCode(inviteCode);
+
+		if (!chatParticipantRepository.
+			existsByParticipantIdAndChatRoomId(memberId, room.getId())) {
+			throw new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT);
+		}
+
 		return ChatRoomMapper.toListResponse(room);
 	}
 }

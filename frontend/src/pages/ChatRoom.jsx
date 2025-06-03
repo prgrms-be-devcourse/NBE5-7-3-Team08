@@ -11,7 +11,7 @@ import RoomHeader from '../components/chatroom/RoomHeader';
 
 const ChatRoom = () => {
 
-  const { roomId, inviteCode } = useParams();
+  const { inviteCode } = useParams();
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
   const [inputMode, setInputMode] = useState("TEXT");
@@ -25,28 +25,31 @@ const ChatRoom = () => {
 
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();           // ← 네비게이트 훅
-  const location = useLocation();           // ← 현재 URL 가져오기
 
   const [roomName, setRoomName] = useState("로딩 중...");
+  const [roomId, setRoomId] = useState(null);
 
-  // 1. 방 이름 불러오기
+  // 1. 방 정보(현재는 방 이름만) 불러오기
   const fetchRoomInfo = async () => {
     try {
-      const res = await axiosInstance.get(`/chat-rooms/check?inviteCode=${inviteCode}`, {
+      const res = await axiosInstance.get(`/chat-rooms/${inviteCode}`, {
       });
 
       const roomData = res.data;
+
+      setRoomId(roomData.roomId);
       setRoomName(roomData.roomName);
+      return roomData.roomId;
     } catch (error) {
-      console.error('방 정보 요청 실패:', error);
-      setRoomName(`채팅방 #${roomId}`); // 오류 시 기본값으로 표시
+        navigate(`/error`);
+      return null;
     }
   };
 
   // 2. 메시지 목록 불러오기
-  const fetchMessages = async () => {
+  const fetchMessages = async (roomId) => { // 수정: 파라미터 추가
     try {
-      const res = await axiosInstance.get(`/${roomId}/messages`);
+      const res = await axiosInstance.get(`/${roomId}/messages`); 
       const data = res.data;
 
       // 날짜 유효성 검사
@@ -92,13 +95,13 @@ const ChatRoom = () => {
     }
   };
 
-  //웹소켓 연결 (현재 채팅방 구독)
+  // 웹소켓 연결 (roomId가 있을 때만 연결)
   const stompClientRef = useWebSocket({
-    roomId,
-    onMessageReceived: (received)=> {
+    roomId, // roomId가 null이면 useWebSocket 내부에서 연결하지 않도록 처리해야 함
+    onMessageReceived: (received) => {
       //메세지 상태 업데이트
       setMessages(prev => {
-        const updated=prev.some(m => m.messageId === received.messageId)
+        const updated = prev.some(m => m.messageId === received.messageId)
         ? prev.map(m => m.messageId === received.messageId ? received : m)
         : [...prev, received];
 
@@ -108,21 +111,28 @@ const ChatRoom = () => {
     }
   });
 
-  //roomId가 변할 때 초기 데이터 불러오기
   useEffect(() => {
-    if (!roomId) {
-      console.error("No roomId available");
-      navigate("/");
+    if (!inviteCode) {
+      console.error("No inviteCode available");
+      navigate("/error");
       return;
     }
 
-    setMessages([]); // 이전 채팅방 메세지 제거
+    const initializeRoom = async () => {
+      setMessages([]); // 이전 채팅방 메시지 제거
+      
+      // 1. 먼저 방 정보 가져오기 (roomId 포함)
+      const fetchedRoomId = await fetchRoomInfo();
+      
+      if (fetchedRoomId) {
+        // 2. roomId를 얻은 후 나머지 초기화
+        fetchCurrentUser();
+        fetchMessages(fetchedRoomId); // roomId를 파라미터로 전달
+      }
+    };
 
-    fetchCurrentUser();
-    fetchRoomInfo(); // 방 정보 가져오기 함수 호출 추가
-    fetchMessages();
-
-  },[roomId]);
+    initializeRoom();
+  }, [inviteCode]);
 
   const handleLeaveRoom = async () => {
     try {
@@ -260,10 +270,16 @@ const ChatRoom = () => {
   // 메시지 전송 (텍스트/코드/이미지 모두 처리)
   const sendMessage = (overrideMessage = null) => {
     const client = stompClientRef.current;
-    // 연결이 끊긴 경우 재연결 시도
-    if (!client.connected) {
-      client.activate();
+    
+    // roomId가 없거나 연결이 끊긴 경우 처리
+    if (!roomId) {
+      alert('채팅방 정보를 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    
+    if (!client || !client.connected) {
       alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+      // 재연결 로직이 있다면 여기서 처리
       return;
     }
 
