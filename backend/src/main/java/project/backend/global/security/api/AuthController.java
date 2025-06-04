@@ -27,7 +27,7 @@ public class AuthController {
 		jwtProvider.replaceAccessToken(response, token);
 		return ResponseEntity
 			.status(HttpStatus.OK)
-			.body("토큰 동기화 성공");
+			.body("토큰 재발급 성공");
 	}
 
 }
