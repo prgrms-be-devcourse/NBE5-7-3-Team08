@@ -1,6 +1,5 @@
 package project.backend.domain.member.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,11 +63,6 @@ public class Member {
 	@JoinColumn(name = "profile_image_id")
 	private ImageFile profileImage;
 
-	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-	private MemberStatus memberStatus;
-
-	public Member initStatus() {
-		memberStatus = new MemberStatus(this);
-		return this;
-	}
+	@Setter
+	private Long recentRoomId;
 }

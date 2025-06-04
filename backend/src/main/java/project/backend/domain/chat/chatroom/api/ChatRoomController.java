@@ -64,11 +64,11 @@ public class ChatRoomController {
 	}
 
 	@GetMapping("/recent")
-	public RecentChatRoomResponse getRecentRoomId(
+	public RecentChatRoomResponse getRecentRoomInviteCode(
 		@AuthenticationPrincipal MemberDetails memberDetails) {
-		Long roomId = chatRoomService.getMostRecentRoomId(memberDetails.getId());
-		String inviteCode = chatRoomService.getInviteCode(roomId);
-		return new RecentChatRoomResponse(roomId, inviteCode);
+		String inviteCode = chatRoomService.getRecentRoomInviteCode(
+			memberDetails.getId());
+		return new RecentChatRoomResponse(inviteCode);
 	}
 
 	//채팅방 이동 시 memberStatus의 roomId를 업데이트

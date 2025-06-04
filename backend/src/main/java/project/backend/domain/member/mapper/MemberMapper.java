@@ -13,15 +13,13 @@ public class MemberMapper {
 
 	public static Member toEntity(SignUpRequest request, String encryptedPassword,
 		ImageFile defaultProfileImg) {
-		Member member = Member.builder()
+		return Member.builder()
 			.email(request.getEmail())
 			.password(encryptedPassword)
 			.nickname(request.getNickname())
 			.provider(ProviderType.LOCAL)
 			.profileImage(defaultProfileImg)
 			.build();
-
-		return member.initStatus();
 	}
 
 	public static MemberResponse toResponse(Member member) {
@@ -34,15 +32,13 @@ public class MemberMapper {
 	}
 
 	public static Member toEntity(OAuthMemberDto request, ImageFile defaultProfileImg) {
-		Member member = Member.builder()
+		return Member.builder()
 			.email(request.email())
 			.nickname(request.nickname())
 			.provider(ProviderType.GITHUB)
 			.gitHubUserName(request.login())
 			.profileImage(defaultProfileImg)
 			.build();
-
-		return member.initStatus();
 	}
 
 }

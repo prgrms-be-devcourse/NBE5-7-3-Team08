@@ -83,14 +83,14 @@ public class ChatRoomService {
 
 	@Transactional
 	public Long getRoomIdByInviteCode(String inviteCode) {
-		ChatRoom room = findByInviteCode(inviteCode);
+		ChatRoom room = getByInviteCode(inviteCode);
 
 		return room.getId();
 	}
 
 	@Transactional
 	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
-		ChatRoom room = findByInviteCode(inviteCode);
+		ChatRoom room = getByInviteCode(inviteCode);
 
 		Member member = memberService.getMemberById(memberId);
 
@@ -114,14 +114,15 @@ public class ChatRoomService {
 	}
 
 	@Transactional(readOnly = true)
-	public Long getMostRecentRoomId(Long memberId) {
-		Long roomId = memberService.getMemberById(memberId).getMemberStatus().getRoomId();
+	public String getRecentRoomInviteCode(Long memberId) {
+		Long roomId = memberService.getMemberById(memberId).getRecentRoomId();
 
 		// 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
 		if (roomId == null) {
 			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST);
 		}
-		return roomId;
+
+		return getRoomById(roomId).getInviteCode();
 	}
 
 	@Transactional(readOnly = true)
@@ -170,7 +171,7 @@ public class ChatRoomService {
 		room.getParticipants().remove(participant);
 	}
 
-	private ChatRoom findByInviteCode(String inviteCode) {
+	private ChatRoom getByInviteCode(String inviteCode) {
 		return chatRoomRepository.findByInviteCode(inviteCode)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
@@ -183,13 +184,13 @@ public class ChatRoomService {
 
 	@Transactional(readOnly = true)
 	public ChatRoomNameResponse getChatRoomByInviteCode(String inviteCode) {
-		ChatRoom room = findByInviteCode(inviteCode);
+		ChatRoom room = getByInviteCode(inviteCode);
 		return ChatRoomMapper.toListResponse(room);
 	}
 
 	@Transactional
 	public void moveRoom(Long memberId, Long roomId) {
-		memberService.getMemberById(memberId).getMemberStatus().setRoomId(roomId);
+		memberService.getMemberById(memberId).setRecentRoomId(roomId);
 	}
 }
 
