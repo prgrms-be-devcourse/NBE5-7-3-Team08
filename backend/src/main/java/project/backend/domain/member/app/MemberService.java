@@ -3,7 +3,6 @@ package project.backend.domain.member.app;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,8 +36,8 @@ public class MemberService {
 
 	public MemberResponse saveMember(SignUpRequest request) {
 
-		if (checkIfMemberExists(request.getEmail())) {
-			log.info("예외 = {}", "이미 존재하는 email");
+		if (checkIfMemberExists(request.getUsername())) {
+			log.info("이미 존재하는 username :  = {}", request.getUsername());
 			throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
 		}
 
@@ -78,17 +77,22 @@ public class MemberService {
 	}
 
 	// Spring Security에서 UsernameNotFoundException을 처리하도록 유도하는 메서드
-	public Member loginByEmail(String email) {
+	public Member getMemberForLogin(String username) {
 		try {
-			return getMemberByEmail(email);
+			return getMemberByUsername(username);
 		} catch (MemberException e) {
-			log.info("존재하지 않는 이메일로 로그인 시도: {}", email);
-			throw new UsernameNotFoundException("존재하지 않는 유저입니다: " + email, e);
+			log.info("존재하지 않는 username으로 로그인 시도: {}", username);
+			throw new UsernameNotFoundException("존재하지 않는 유저입니다: " + username, e);
 		}
 	}
 
 	public Member getMemberByEmail(String email) {
 		return memberRepository.findByEmail(email)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+	}
+
+	public Member getMemberByUsername(String username) {
+		return memberRepository.findByUsername(username)
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 	}
 
@@ -107,7 +111,7 @@ public class MemberService {
 	}
 
 	public MemberResponse getMemberDetails(Authentication auth) {
-		
+
 		MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
 		Long memberId = loginMember.getId();
 		log.info("memberId = {}", memberId);

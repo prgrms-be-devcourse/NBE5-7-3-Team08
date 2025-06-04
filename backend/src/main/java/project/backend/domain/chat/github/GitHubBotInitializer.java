@@ -34,6 +34,7 @@ public class GitHubBotInitializer {
 		imageFileRepository.flush();
 
 		Member gitHubBot = Member.builder()
+			.username("GithubBot")
 			.email("github@github.com")
 			.nickname("깃허브봇")
 			.profileImage(

@@ -14,6 +14,7 @@ public class MemberMapper {
 	public static Member toEntity(SignUpRequest request, String encryptedPassword,
 		ImageFile defaultProfileImg) {
 		return Member.builder()
+			.username(request.getUsername())
 			.email(request.getEmail())
 			.password(encryptedPassword)
 			.nickname(request.getNickname())
@@ -25,6 +26,7 @@ public class MemberMapper {
 	public static MemberResponse toResponse(Member member) {
 		return MemberResponse.builder()
 			.id(member.getId())
+			.username(member.getUsername())
 			.email(member.getEmail())
 			.nickname(member.getNickname())
 			.profileImg(member.getProfileImage().getStoreFileName())
@@ -36,7 +38,7 @@ public class MemberMapper {
 			.email(request.email())
 			.nickname(request.nickname())
 			.provider(ProviderType.GITHUB)
-			.gitHubUserName(request.login())
+			.username(request.login())
 			.profileImage(defaultProfileImg)
 			.build();
 	}

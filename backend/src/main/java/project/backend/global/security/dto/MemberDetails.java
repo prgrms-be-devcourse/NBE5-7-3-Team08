@@ -14,6 +14,7 @@ import java.util.List;
 public class MemberDetails implements UserDetails {
 
 	private final Long id;
+	private final String username;
 	private final String email;
 	private final String password;
 	private final String nickname;
@@ -21,6 +22,7 @@ public class MemberDetails implements UserDetails {
 
 	public MemberDetails(Member member) {
 		this.id = member.getId();
+		this.username = member.getUsername();
 		this.email = member.getEmail();
 		this.password = member.getPassword();
 		this.nickname = member.getNickname();
@@ -34,12 +36,13 @@ public class MemberDetails implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return this.email;
+		return this.username;
 	}
 
 	public static MemberResponse toResponse(MemberDetails memberDetails) {
 		return MemberResponse.builder()
 			.id(memberDetails.getId())
+			.username(memberDetails.getUsername())
 			.email(memberDetails.getEmail())
 			.nickname(memberDetails.getNickname())
 			.profileImg(memberDetails.getProfileImg())

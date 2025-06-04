@@ -6,6 +6,7 @@ import "../App.css"
 
 function App() {
   const navigate = useNavigate();
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [nickname, setNickname] = useState("")
@@ -14,9 +15,10 @@ function App() {
   e.preventDefault();
 
   const payload = {
-    email,
+    username,
     password,
     nickname,
+    email,
   };
 
   try {
@@ -57,16 +59,20 @@ function App() {
 
         <h1 className="heading">Let's Start!</h1>
 
+      
         <form onSubmit={handleSubmit}>
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">Username</label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일을 입력해주세요"
+              id="username"
+              type="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="유저네임을 입력해주세요"
               required
+              minLength="5"
+              maxLength="12"
             />
           </div>
 
@@ -84,7 +90,7 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="nickname">Username</label>
+            <label htmlFor="nickname">Nickname</label>
             <input
               id="nickname"
               type="text"
@@ -93,6 +99,18 @@ function App() {
               placeholder="사용할 닉네임을 입력해주세요"
               required
               minLength="3"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일을 입력해주세요"
+              required
             />
           </div>
 

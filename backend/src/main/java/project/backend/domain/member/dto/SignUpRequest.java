@@ -9,6 +9,14 @@ import lombok.Data;
 @Data
 public class SignUpRequest {
 
+	@NotBlank(message = "유저네임은 필수입니다.")
+	@Size(min = 5, max = 12, message = "유저네임은 최소 5자 이상, 12자 이하여야 합니다.")
+	private String username;
+
+	@NotBlank(message = "닉네임은 필수입니다.")
+	@Size(min = 3, message = "닉네임은 최소 3자 이상이여야 합니다.")
+	private String nickname;
+
 	@NotBlank(message = "이메일은 필수입니다.")
 	@Email(message = "올바른 이메일 형식이어야 합니다.")
 	private String email;
@@ -17,8 +25,5 @@ public class SignUpRequest {
 	@Size(min = 4, message = "비밀번호는 최소 4자 이상이여야 합니다.")
 	private String password;
 
-	@NotBlank(message = "닉네임은 필수입니다.")
-	@Size(min = 3, message = "닉네임은 최소 3자 이상이여야 합니다.")
-	private String nickname;
 
 }
