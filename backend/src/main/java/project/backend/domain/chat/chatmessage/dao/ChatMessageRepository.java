@@ -16,11 +16,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 		from chat_message m 
 		join chat_participant cp on cp.room_id = m.room_id 
 		join member mb on cp.member_id = mb.member_id 
-		where mb.email = :email 
+		where mb.username = :username 
 		order by m.send_at desc 
 		limit 1
 		""", nativeQuery = true)
-	Optional<Long> findMostRecentRoomIdByMemberEmail(@Param("email") String email);
+	Optional<Long> findMostRecentRoomIdByMemberUsername(@Param("username") String username);
 
 	@Query(value = """
 		SELECT * 

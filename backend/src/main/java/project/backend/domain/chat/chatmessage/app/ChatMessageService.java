@@ -57,9 +57,9 @@ public class ChatMessageService {
 	private final ChatMessageMapper messageMapper;
 
 	@Transactional
-	public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
+	public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String username) {
 
-		Member sender = memberService.getMemberByEmail(email);
+		Member sender = memberService.getMemberByUsername(username);
 
 		ChatRoom room = chatRoomService.getRoomById(roomId);
 
@@ -131,16 +131,16 @@ public class ChatMessageService {
 
 	@Transactional
 	public ChatMessageResponse editMessage(Long roomId, ChatMessageEditRequest request,
-		String email) {
+		String username) {
 
 		//유효성 확인
-		memberService.getMemberByEmail(email);
+		memberService.getMemberByUsername(username);
 		chatRoomService.getRoomById(roomId);
 
 		ChatMessage message = chatMessageRepository.findById(request.messageId())
 			.orElseThrow(() -> new ChatMessageException(ChatMessageErrorCode.MESSAGE_NOT_FOUND));
 
-		if (!message.getSender().getParticipant().getEmail().equals(email)) {
+		if (!message.getSender().getParticipant().getUsername().equals(username)) {
 			throw new AuthException(AuthErrorCode.FORBIDDEN_MESSAGE_EDIT);
 		}
 
@@ -165,16 +165,16 @@ public class ChatMessageService {
 	}
 
 	@Transactional
-	public ChatMessageResponse deleteMessage(Long roomId, Long messageId, String email) {
+	public ChatMessageResponse deleteMessage(Long roomId, Long messageId, String username) {
 
 		//유효성 확인
-		memberService.getMemberByEmail(email);
+		memberService.getMemberByUsername(username);
 		chatRoomService.getRoomById(roomId);
 
 		ChatMessage message = chatMessageRepository.findById(messageId)
 			.orElseThrow(() -> new ChatMessageException(ChatMessageErrorCode.MESSAGE_NOT_FOUND));
 
-		if (!message.getSender().getParticipant().getEmail().equals(email)) {
+		if (!message.getSender().getParticipant().getUsername().equals(username)) {
 			throw new AuthException(AuthErrorCode.FORBIDDEN_MESSAGE_DELETE);
 		}
 

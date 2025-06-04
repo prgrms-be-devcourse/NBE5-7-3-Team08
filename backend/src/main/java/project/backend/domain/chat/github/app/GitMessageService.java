@@ -39,8 +39,8 @@ public class GitMessageService {
 
 	@Value("${url.ngrok}")
 	private String ngrokUrl;
-	@Value("${github.email-key}")
-	private String githubEmailKey;
+	@Value("${github.username}")
+	private String githubUsername;
 	private final GitHubClient gitHubClient;
 	private final TokenRedisRepository tokenRedisRepository;
 	private final ChatParticipantRepository chatParticipantRepository;
@@ -65,7 +65,7 @@ public class GitMessageService {
 	}
 
 	private void sendGitMessage(ChatRoom room, GitMessageDto gitMessage) {
-		Member githubBot = memberService.getMemberByEmail(githubEmailKey);
+		Member githubBot = memberService.getMemberByUsername(githubUsername);
 		ChatParticipant gitParticipant = chatParticipantRepository.findByParticipantAndChatRoom(
 				githubBot, room)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));

@@ -19,6 +19,10 @@ public class GitHubBotInitializer {
 
 	@Value("${file.images.profile.github}")
 	private String githubProfile;
+
+	@Value("${github.username}")
+	private String githubUsername;
+
 	private final ImageFileRepository imageFileRepository;
 	private final MemberRepository memberRepository;
 
@@ -34,7 +38,7 @@ public class GitHubBotInitializer {
 		imageFileRepository.flush();
 
 		Member gitHubBot = Member.builder()
-			.username("GithubBot")
+			.username(githubUsername)
 			.email("github@github.com")
 			.nickname("깃허브봇")
 			.profileImage(

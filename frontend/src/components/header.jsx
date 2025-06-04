@@ -80,12 +80,9 @@ export function Header() {
             }}
             onClick={async () => {
               try {
-                const response = await fetch("http://localhost:8080/logout", {
-                  method: "POST",
-                  credentials: "include" // ✅ 세션 쿠키 포함 (JSESSIONID)
+                const response = await axiosInstance.post("/logout", {
                 });
-
-                if (response.ok) {
+                if (response.status===204) {
                   alert("로그아웃 되었습니다.");
                   window.location.href = "/login"; // 또는 원하는 페이지로 이동
                 } else {

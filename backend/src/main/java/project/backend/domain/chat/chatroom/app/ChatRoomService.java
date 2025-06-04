@@ -53,8 +53,8 @@ public class ChatRoomService {
 	private final GitMessageService gitMessageService;
 	private final ApplicationEventPublisher eventPublisher;
 
-	@Value("${github.email-key}")
-	private String githubEmailKey;
+	@Value("${github.username}")
+	private String githubUsername;
 
 	@Transactional
 	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
@@ -77,7 +77,7 @@ public class ChatRoomService {
 	}
 
 	private void joinGitHubBot(ChatRoom room) {
-		Member githubBot = memberService.getMemberByEmail(githubEmailKey);
+		Member githubBot = memberService.getMemberByUsername(githubUsername);
 		ChatParticipant gitParticipant = ChatParticipant.of(githubBot, room);
 		room.addParticipant(gitParticipant);
 	}
@@ -123,17 +123,18 @@ public class ChatRoomService {
 	}
 
 
-	public Long getMostRecentRoomId(String email) {
+	public Long getMostRecentRoomId(String username) {
 
 		// 1순위: 가장 최근 메시지가 도착한 채팅방
-		Optional<Long> recentRoomId = chatMessageRepository.findMostRecentRoomIdByMemberEmail(
-			email);
+		Optional<Long> recentRoomId = chatMessageRepository.findMostRecentRoomIdByMemberUsername(
+			username);
 		if (recentRoomId.isPresent()) {
 			return recentRoomId.get();
 		}
 
 		// 2순위: 채팅방에 메세지가 없을 때 참여중인 채팅방 중 roomId가 가장 큰 채팅방
-		Optional<Long> fallbackRoomId = chatParticipantRepository.findMostLargeRoomIdByEmail(email);
+		Optional<Long> fallbackRoomId = chatParticipantRepository.findMostLargeRoomIdByUsername(
+			username);
 		if (fallbackRoomId.isPresent()) {
 			return fallbackRoomId.get();
 		}

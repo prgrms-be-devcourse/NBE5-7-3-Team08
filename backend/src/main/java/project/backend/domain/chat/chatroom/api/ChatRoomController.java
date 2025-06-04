@@ -69,7 +69,7 @@ public class ChatRoomController {
 	@GetMapping("/recent")
 	public RecentChatRoomResponse getRecentRoomId(
 		@AuthenticationPrincipal MemberDetails memberDetails) {
-		Long roomId = chatRoomService.getMostRecentRoomId(memberDetails.getEmail());
+		Long roomId = chatRoomService.getMostRecentRoomId(memberDetails.getUsername());
 		String inviteCode = chatRoomService.getInviteCode(roomId);
 		return new RecentChatRoomResponse(roomId, inviteCode);
 	}

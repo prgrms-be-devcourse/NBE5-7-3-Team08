@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 
 const useWebSocket = ({
     roomId,
@@ -56,7 +57,7 @@ const useWebSocket = ({
                 }
             }, 20000);
             },
-            
+
             onStompError: (frame) => {
                 console.error("💥 STOMP error:", frame.headers['message']);
                 if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {

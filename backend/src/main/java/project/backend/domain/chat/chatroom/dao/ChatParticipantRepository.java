@@ -18,11 +18,11 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
 	@Query("""
 		select cp.chatRoom.id 
 		from ChatParticipant cp 
-		where cp.participant.email = :email 
+		where cp.participant.username = :username 
 		order by cp.chatRoom.id desc 
 		limit 1
 		""")
-	Optional<Long> findMostLargeRoomIdByEmail(@Param("email") String email);
+	Optional<Long> findMostLargeRoomIdByUsername(@Param("username") String username);
 
 	boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
 
