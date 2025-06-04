@@ -26,7 +26,7 @@ const Home = () => {
         if (status === 404) {
           navigate('/blank'); // 참여 중인 채팅방 없음
         } else {
-          const message = err.response?.data?.message || '채팅방 조회 실패패';
+          const message = err.response?.data?.message || '채팅방 조회 실패';
           alert(message); 
         }
       })
