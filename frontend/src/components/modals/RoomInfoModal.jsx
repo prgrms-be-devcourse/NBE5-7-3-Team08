@@ -9,6 +9,7 @@ import {
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from "../api/axiosInstance"
+import { safeRefreshToken } from "../api/refreshManager";
 
 const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
   const [participants, setParticipants] = useState([]);
@@ -46,6 +47,12 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
           fetchParticipants();
         });
       },
+
+      onWebSocketClose: async () => {
+        console.warn('🛑 WebSocket 끊김 → 토큰 갱신 시도');
+        await safeRefreshToken(); // 중복 요청 방지됨
+      },
+
       onStompError: (frame) => {
         console.error('STOMP error', frame);
       }

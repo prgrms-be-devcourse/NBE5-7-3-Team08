@@ -9,6 +9,7 @@ import JoinRoomModal from './modals/JoinRoomModal';
 import RoomInfoModal from './modals/RoomInfoModal';
 import Toast from './common/Toast';
 import axiosInstance from "./api/axiosInstance"
+import { safeRefreshToken } from "./api/refreshManager";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -78,9 +79,12 @@ const Sidebar = () => {
           });
         });
       },
-      onWebSocketClose: () => {
-        console.log('❌ Sidebar WebSocket disconnected');
+
+      onWebSocketClose: async () => {
+      console.warn('🛑 WebSocket 끊김 → 토큰 갱신 시도');
+        await safeRefreshToken(); // 중복 요청 방지됨
       },
+
       onStompError: (frame) => {
         console.error("💥 Sidebar STOMP error:", frame.headers['message']);
       }

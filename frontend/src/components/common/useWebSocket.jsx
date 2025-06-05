@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useNavigate } from 'react-router-dom';
-import axios from "axios";
+import { safeRefreshToken } from "../api/refreshManager";
 
 const useWebSocket = ({
     roomId,
@@ -58,12 +58,11 @@ const useWebSocket = ({
             }, 20000);
             },
 
-            onStompError: (frame) => {
-                console.error("💥 STOMP error:", frame.headers['message']);
-                if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
-                    navigate("/login");
-                }
+            onWebSocketClose: async () => {
+                console.warn('🛑 WebSocket 끊김 → 토큰 갱신 시도');
+                await safeRefreshToken(); // 중복 요청 방지됨
             }
+
         });
 
         client.activate();
