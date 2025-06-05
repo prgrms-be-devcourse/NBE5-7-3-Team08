@@ -3,13 +3,13 @@ package project.backend.domain.chat.chatroom.app;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
@@ -20,23 +20,15 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
-import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
 import project.backend.domain.chat.github.app.GitMessageService;
 import project.backend.domain.member.app.MemberService;
-import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
-import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
-import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
-import project.backend.global.exception.errorcode.MemberErrorCode;
-import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
-import project.backend.global.exception.ex.MemberException;
+import project.backend.global.exception.ex.ChatRoomException;
 
 @Slf4j
 @Service
@@ -46,7 +38,6 @@ public class ChatRoomService {
 
 
 	private final ChatRoomRepository chatRoomRepository;
-	private final ChatMessageRepository chatMessageRepository;
 	private final ChatParticipantRepository chatParticipantRepository;
 	private final ChatRoomMapper chatRoomMapper;
 	private final MemberService memberService;
@@ -62,8 +53,7 @@ public class ChatRoomService {
 
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request);
 
-		ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
-		chatParticipant.setOwner(true);
+		ChatParticipant chatParticipant = ChatParticipant.createOwner(owner, chatRoom);
 		chatRoom.addParticipant(chatParticipant);
 
 		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
@@ -100,13 +90,11 @@ public class ChatRoomService {
 	@Transactional
 	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = getByInviteCode(inviteCode);
-
 		Member member = memberService.getMemberById(memberId);
 
-		validateNotParticipant(memberId,room.getId());
+		validateAlreadyParticipant(memberId, room);
 
 		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
-
 		room.addParticipant(chatParticipant);
 
 		eventPublisher.publishEvent(
@@ -186,19 +174,29 @@ public class ChatRoomService {
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 
-	@Transactional(readOnly = true)
-	public ChatRoomNameResponse getChatRoomDetails(String inviteCode,Long memberId) {
+	@Transactional
+	public ChatRoomNameResponse getChatRoomDetails(String inviteCode, Long memberId) {
 		ChatRoom room = getByInviteCode(inviteCode);
+		validateNotParticipant(memberId, room.getId());
 
-		validateNotParticipant(memberId,room.getId());
+		memberService.getMemberById(memberId).setRecentRoomId(room.getId()); //recentRoomId 업데이트
 
 		return ChatRoomMapper.toListResponse(room);
 	}
 
-	private void validateNotParticipant(Long memberId, Long roomId) {
+	public void validateNotParticipant(Long memberId, Long roomId) {
 		if (!chatParticipantRepository.
 			existsByParticipantIdAndChatRoomId(memberId, roomId)) {
 			throw new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT);
+		}
+	}
+
+	private void validateAlreadyParticipant(Long memberId, ChatRoom room) {
+		boolean isAlreadyParticipant = chatParticipantRepository
+			.existsByParticipantIdAndChatRoomId(memberId, room.getId());
+
+		if (isAlreadyParticipant) {
+			throw new ChatRoomException(ChatRoomErrorCode.ALREADY_PARTICIPANT);
 		}
 	}
 }

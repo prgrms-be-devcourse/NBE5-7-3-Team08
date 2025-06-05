@@ -32,22 +32,31 @@ public class ChatParticipant {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "room_id")
+	@Setter
 	private ChatRoom chatRoom;
 
-	@Setter
 	private boolean isOwner;
 
 	@Builder
-	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom) {
+	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom, boolean isOwner) {
 		this.id = id;
 		this.participant = participant;
 		this.chatRoom = chatRoom;
+		this.isOwner = isOwner;
 	}
 
 	public static ChatParticipant of(Member participant, ChatRoom chatRoom) {
 		return ChatParticipant.builder()
 			.participant(participant)
 			.chatRoom(chatRoom)
+			.build();
+	}
+
+	public static ChatParticipant createOwner(Member participant, ChatRoom chatRoom) {
+		return ChatParticipant.builder()
+			.participant(participant)
+			.chatRoom(chatRoom)
+			.isOwner(true)
 			.build();
 	}
 

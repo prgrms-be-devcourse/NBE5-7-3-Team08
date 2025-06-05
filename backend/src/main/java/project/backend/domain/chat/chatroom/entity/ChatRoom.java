@@ -60,5 +60,6 @@ public class ChatRoom {
 
 	public void addParticipant(ChatParticipant chatParticipant) {
 		participants.add(chatParticipant);
+		chatParticipant.setChatRoom(this);
 	}
 }
