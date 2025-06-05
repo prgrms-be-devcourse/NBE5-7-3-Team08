@@ -12,7 +12,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import project.backend.domain.member.entity.Member;
 
 
@@ -32,7 +31,6 @@ public class ChatParticipant {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "room_id")
-	@Setter
 	private ChatRoom chatRoom;
 
 	private boolean isOwner;

@@ -15,11 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
+import project.backend.domain.chat.chatroom.dto.EntryRoomResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.RoomInfoResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
@@ -127,7 +128,7 @@ public class ChatRoomService {
 
 
 	@Transactional(readOnly = true)
-	public Page<ChatRoomNameResponse> findChatRoomsByMemberId(Long memberId, Pageable pageable) {
+	public Page<RoomInfoResponse> findChatRoomsByMemberId(Long memberId, Pageable pageable) {
 
 		Page<ChatRoom> chatRooms = chatRoomRepository.findChatRoomsByParticipantId(
 			memberId, pageable);
@@ -175,12 +176,18 @@ public class ChatRoomService {
 	}
 
 	@Transactional
-	public ChatRoomNameResponse getChatRoomDetails(String inviteCode, Long memberId) {
+	public EntryRoomResponse getEntryInfo(String inviteCode, Long memberId) {
 		ChatRoom room = getByInviteCode(inviteCode);
 		validateNotParticipant(memberId, room.getId());
 
 		memberService.getMemberById(memberId).setRecentRoomId(room.getId()); //recentRoomId 업데이트
 
+		return new EntryRoomResponse(room.getId(), room.getName());
+	}
+
+	@Transactional(readOnly = true)
+	public RoomInfoResponse getRoomInfo(String inviteCode, Long memberId) {
+		ChatRoom room = getByInviteCode(inviteCode);
 		return ChatRoomMapper.toListResponse(room);
 	}
 

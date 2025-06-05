@@ -21,13 +21,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
+import project.backend.domain.chat.chatroom.dto.EntryRoomResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.RoomInfoResponse;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
 import project.backend.global.security.dto.MemberDetails;
@@ -72,7 +73,7 @@ public class ChatRoomController {
 	}
 
 	@GetMapping
-	public Page<ChatRoomNameResponse> getChatRooms(
+	public Page<RoomInfoResponse> getChatRooms(
 		@AuthenticationPrincipal MemberDetails memberDetails,
 		@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		if (memberDetails == null) {
@@ -112,9 +113,15 @@ public class ChatRoomController {
 
 	//채팅방 입장
 	@GetMapping("/{inviteCode}")
-	public ChatRoomNameResponse getChatRoomDetails(@PathVariable String inviteCode,
+	public EntryRoomResponse entryChatRoom(@PathVariable String inviteCode,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
-		return chatRoomService.getChatRoomDetails(inviteCode, memberDetails.getId());
+		return chatRoomService.getEntryInfo(inviteCode, memberDetails.getId());
+	}
+
+	@GetMapping("/info/{inviteCode}")
+	public RoomInfoResponse getChatRoomDetails(@PathVariable String inviteCode,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+		return chatRoomService.getRoomInfo(inviteCode, memberDetails.getId());
 	}
 
 

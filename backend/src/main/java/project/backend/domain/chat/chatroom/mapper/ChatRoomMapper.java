@@ -6,11 +6,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.RoomInfoResponse;
 import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
@@ -22,8 +22,8 @@ import project.backend.domain.member.entity.Member;
 public class ChatRoomMapper {
 
 
-	public static ChatRoomNameResponse toListResponse(ChatRoom chatRoom) {
-		return ChatRoomNameResponse.builder()
+	public static RoomInfoResponse toListResponse(ChatRoom chatRoom) {
+		return RoomInfoResponse.builder()
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.repositoryUrl(chatRoom.getRepositoryUrl())
