@@ -36,7 +36,7 @@ const ChatRoom = () => {
 
   const [roomName, setRoomName] = useState("로딩 중...");
   const [roomId, setRoomId] = useState(null);
-  
+
   // ✅ 초기화 상태를 하나로 통합하고 단계별로 관리
   const [initState, setInitState] = useState({
     isRoomValidated: false,
@@ -47,15 +47,18 @@ const ChatRoom = () => {
   });
 
   // ✅ 전체 로딩 상태를 계산으로 처리 (별도 상태 없음)
-  const isFullyLoaded = initState.isRoomValidated && 
-                       initState.isUserLoaded && 
-                       initState.isMessagesLoaded;
+  const isFullyLoaded = initState.isRoomValidated &&
+    initState.isUserLoaded &&
+    initState.isMessagesLoaded;
 
   // 맨 아래로 스크롤하는 함수 (새 메시지 수신용 및 초기 로드 완료 시 사용)
   const scrollToBottom = useCallback(() => {
     if (messageContainerRef.current) {
       const container = messageContainerRef.current;
-      container.scrollTop = container.scrollHeight;
+      // scrollHeight가 변경될 때까지 기다렸다가 스크롤
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
     }
   }, []);
 
@@ -67,13 +70,13 @@ const ChatRoom = () => {
 
       setRoomId(roomData.roomId);
       setRoomName(roomData.roomName);
-      
+
       // ✅ 한 번에 상태 업데이트
       setInitState(prev => ({
         ...prev,
         isRoomValidated: true
       }));
-      
+
       return roomData.roomId;
     } catch (error) {
       console.error('방 정보 조회 실패:', error);
@@ -89,7 +92,7 @@ const ChatRoom = () => {
   // 2. 메시지 목록 불러오기 (커서 기반)
   const fetchMessages = useCallback(async (cursorValue = null, isLoadMore = false) => {
     console.log('🔍 fetchMessages 호출:', { cursorValue, isLoadMore });
-    
+
     setIsLoadingMessages(prev => {
       if (prev) {
         console.log('❌ 이미 로딩 중이므로 중단');
@@ -102,7 +105,7 @@ const ChatRoom = () => {
       const params = {
         size: 30
       };
-      
+
       if (cursorValue) {
         params.cursor = cursorValue;
       }
@@ -112,7 +115,7 @@ const ChatRoom = () => {
       const data = res.data;
 
       const messageList = data.messages || [];
-      
+
       if (!Array.isArray(messageList)) {
         console.error('❌ Message list is not an array:', messageList);
         return;
@@ -144,7 +147,7 @@ const ChatRoom = () => {
       } else {
         // 초기 로드
         setMessages(sortedMessages);
-        
+
         // ✅ 초기 메시지 로드 완료 상태 업데이트
         setInitState(prev => ({
           ...prev,
@@ -152,25 +155,25 @@ const ChatRoom = () => {
         }));
         // ✅ 초기 로드 완료 후 맨 아래로 스크롤
         setIsInitialLoad(false); // 먼저 false로 설정하여 아래 useEffect가 발동하도록
-        requestAnimationFrame(() => {
-          scrollToBottom(); // 초기 로드 시 맨 아래로 스크롤
-        });
+        // requestAnimationFrame(() => { // scrollToBottom 내부에 requestAnimationFrame이 있으므로 여기서는 생략
+        //   scrollToBottom();
+        // });
       }
 
       // 커서와 hasMore 상태 업데이트
       const nextCursor = data.nextCursor;
       setCursor(nextCursor);
-      
+
       let hasMore = nextCursor !== null && messageList.length > 0;
       setHasMoreMessages(hasMore);
-      
+
     } catch (error) {
       console.error('❌ Error fetching messages:', error);
     } finally {
       setIsLoadingMessages(false);
       // setIsInitialLoad(false); // 이 위치는 초기 로드 완료 후 맨 아래로 스크롤 로직에 방해가 될 수 있음
     }
-  }, [roomId, scrollToBottom]); // scrollToBottom을 의존성 배열에 추가
+  }, [roomId]); // scrollToBottom을 의존성 배열에서 제거 (내부에서 requestAnimationFrame 처리)
 
   // 3. 로그인 유저 정보 가져오기
   const fetchCurrentUser = useCallback(async () => {
@@ -186,15 +189,15 @@ const ChatRoom = () => {
       }
 
       const user = await res.json();
-      console.log("현재 사용자 정보:", user); 
+      console.log("현재 사용자 정보:", user);
       setCurrentUser(user);
-      
+
       // ✅ 사용자 정보 로드 완료 상태 업데이트
       setInitState(prev => ({
         ...prev,
         isUserLoaded: true
       }));
-      
+
     } catch (error) {
       console.error('사용자 정보 요청 실패:', error);
       setInitState(prev => ({
@@ -207,7 +210,7 @@ const ChatRoom = () => {
   // 프로필 업데이트 처리 함수
   const handleProfileUpdate = useCallback((profileUpdateData) => {
     console.log('👤 프로필 업데이트 수신:', profileUpdateData);
-    
+
     setMessages(prevMessages => {
       return prevMessages.map(msg => {
         if (msg.senderId === profileUpdateData.userId) {
@@ -228,16 +231,22 @@ const ChatRoom = () => {
     onMessageReceived: (received) => {
       setMessages(prev => {
         // ⭐ 서버에서 받은 메시지로 기존 (임시) 메시지를 업데이트하거나 새 메시지 추가
+        // 동일한 messageId를 가진 메시지가 이미 존재하면 업데이트하고, 없으면 추가
         const updated = prev.some(m => m.messageId === received.messageId)
           ? prev.map(m => m.messageId === received.messageId ? { ...received, isSending: false } : m) // isSending 상태 업데이트
           : [...prev, received];
 
-        const sorted = [...updated].sort((a, b) => new Date(a.sendAt) - new Date(b.sendAt));
-        
-        requestAnimationFrame(() => {
-          scrollToBottom();
-        });
-        
+        const sorted = [...updated].sort((a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime());
+
+        // 새 메시지가 추가되었을 때만 맨 아래로 스크롤
+        // 현재 스크롤 위치가 거의 맨 아래에 있다면 스크롤, 아니면 유지
+        if (messageContainerRef.current) {
+          const { scrollTop, clientHeight, scrollHeight } = messageContainerRef.current;
+          const isNearBottom = (scrollTop + clientHeight) >= (scrollHeight - 100); // 100px 여유
+          if (isNearBottom || received.senderId === currentUser?.userId) {
+            scrollToBottom();
+          }
+        }
         return sorted;
       });
     },
@@ -247,32 +256,32 @@ const ChatRoom = () => {
   // 스크롤 위치 복원 함수 (무한 스크롤 시 사용)
   const restoreScrollPosition = useCallback(() => {
     if (!messageContainerRef.current) return;
-    
+
     const container = messageContainerRef.current;
     const newScrollHeight = container.scrollHeight;
     const oldScrollHeight = prevScrollHeightRef.current;
-    
+
     if (newScrollHeight > oldScrollHeight) {
       const scrollDiff = newScrollHeight - oldScrollHeight;
       const currentScrollTop = container.scrollTop;
       const newScrollTop = currentScrollTop + scrollDiff;
-      
+
       container.scrollTop = newScrollTop;
     }
-    
+
     prevScrollHeightRef.current = newScrollHeight;
   }, []);
 
   // 스크롤 이벤트 핸들러
   const handleScroll = useCallback(() => {
     if (!messageContainerRef.current || !roomId || !initState.isRoomValidated) return;
-    
+
     const container = messageContainerRef.current;
     const { scrollTop, scrollHeight } = container;
-    
+
     const isAtTop = scrollTop <= 150;
     const canLoadMore = !isLoadingMessages && hasMoreMessages && cursor;
-    
+
     if (isAtTop && canLoadMore) {
       prevScrollHeightRef.current = scrollHeight;
       fetchMessages(cursor, true);
@@ -308,30 +317,30 @@ const ChatRoom = () => {
       // ✅ 한 번에 모든 초기 상태 설정
       setInitState({
         isRoomValidated: false,
-        isUserLoaded: false, 
+        isUserLoaded: false,
         isMessagesLoaded: false,
         hasError: false,
         errorMessage: ''
       });
-      
+
       setMessages([]);
       setCursor(null);
       setHasMoreMessages(true);
       setIsInitialLoad(true); // 초기 로딩 상태를 true로 재설정
       setIsLoadingMessages(false);
-      
+
       try {
         // 방 정보와 사용자 정보를 병렬로 로드
         const [fetchedRoomId] = await Promise.all([
           fetchRoomInfo(),
           fetchCurrentUser()
         ]);
-        
+
         if (!fetchedRoomId) {
           navigate("/error");
           return;
         }
-        
+
       } catch (error) {
         console.error('방 초기화 중 오류:', error);
         navigate("/error");
@@ -358,8 +367,12 @@ const ChatRoom = () => {
       requestAnimationFrame(() => {
         restoreScrollPosition();
       });
+    } else if (isInitialLoad === false && messages.length > 0 && !isLoadingMessages) {
+      // 초기 로딩이 완료된 후, 메시지가 있고 더 이상 로딩 중이 아닐 때 맨 아래로 스크롤 (초기 로드 완료 시)
+      scrollToBottom();
     }
-  }, [messages, isInitialLoad, restoreScrollPosition, isLoadingMessages]);
+  }, [messages, isInitialLoad, restoreScrollPosition, isLoadingMessages, scrollToBottom]);
+
 
   const handleLeaveRoom = async () => {
     try {
@@ -386,7 +399,7 @@ const ChatRoom = () => {
       setErrorMessage('채팅방이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    
+
     setIsSearching(true);
     setShowSearchSidebar(true);
     setSearchKeyword(keyword);
@@ -424,11 +437,11 @@ const ChatRoom = () => {
         behavior: 'smooth',
         block: 'center'
       });
-      
+
       messageElement.style.backgroundColor = '#e8f4fd';
       messageElement.style.borderRadius = '6px';
       messageElement.style.transition = 'all 0.3s ease';
-      
+
       setTimeout(() => {
         messageElement.style.backgroundColor = '';
         messageElement.style.borderRadius = '';
@@ -457,35 +470,37 @@ const ChatRoom = () => {
         });
 
         const imageId = response.data;
-        
+
         // 이미지 ID를 포함하여 메시지를 웹소켓으로 보냅니다.
-        // sendMessage 함수 내부에서 currentUser 정보를 활용할 것이므로 여기서는 넘기지 않아도 됩니다.
+        // 이미지의 경우 임시 전송 로직을 사용하지 않고, 서버에서 받은 응답으로만 처리
+        // (즉, 웹소켓 onMessageReceived를 통해 이미지가 수신될 때만 화면에 표시)
         sendMessage({
           type: 'IMAGE',
           content: '', // 이미지 메시지는 content가 비어있을 수 있습니다.
           imageFileId: imageId
-        });
+        }, false); // isTemporary = false로 설정하여 임시 메시지 생성 방지
 
         setImageFile(null);
         setImagePreviewUrl(null);
       } catch (err) {
         console.error("이미지 전송 실패: ", err);
+        alert("이미지 전송에 실패했습니다. 다시 시도해주세요.");
       }
     } else {
-      // 텍스트, 코드 메시지 전송
+      // 텍스트, 코드 메시지 전송 (임시 전송 로직 사용)
       sendMessage();
     }
   };
 
   // 메시지 전송
-  const sendMessage = (overrideMessage = null) => {
+  const sendMessage = (overrideMessage = null, isTemporary = true) => { // isTemporary 파라미터 추가
     const client = stompClientRef.current;
-    
+
     if (!roomId || !initState.isRoomValidated) {
       alert('채팅방 정보를 로딩 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    
+
     if (!client || !client.connected) {
       alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
       return;
@@ -512,40 +527,47 @@ const ChatRoom = () => {
     }
 
     // ⭐ 중요: 서버에 보낼 메시지에 임시 messageId를 추가하고 로컬 상태에 즉시 반영
-    const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const messageWithTempId = {
-      ...messageToSend,
-      messageId: tempMessageId, // 임시 ID
-      senderId: currentUser.userId, 
-      senderName: currentUser.nickname, 
-      profileImageUrl: currentUser.profileImg || '', 
-      isSending: true // 전송 중 상태 표시 (옵션)
-    };
+    // 이미지를 제외하고 텍스트/코드 메시지에만 임시 전송 로직 적용
+    if (isTemporary) { // isTemporary가 true일 때만 임시 메시지 생성
+      const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const messageWithTempId = {
+        ...messageToSend,
+        messageId: tempMessageId, // 임시 ID
+        senderId: currentUser.userId,
+        senderName: currentUser.nickname,
+        profileImageUrl: currentUser.profileImg || '',
+        isSending: true // 전송 중 상태 표시 (옵션)
+      };
 
-    // 1. 서버에 메시지 전송 (웹소켓 publish)
-    client.publish({
-      destination: `/chat/send-message/${roomId}`,
-      body: JSON.stringify(messageWithTempId) // 임시 ID가 포함된 메시지 전송
-    });
-
-    // 2. 메시지를 로컬 상태에 즉시 추가하여 화면에 표시
-    setMessages(prev => {
-      // 기존 메시지 중 동일한 임시 ID가 있으면 업데이트 (혹시 모를 중복 방지), 없으면 새로 추가
-      const updated = prev.some(m => m.messageId === messageWithTempId.messageId)
-        ? prev.map(m => m.messageId === messageWithTempId.messageId ? messageWithTempId : m)
-        : [...prev, messageWithTempId];
-
-      const sorted = [...updated].sort(
-        (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-      );
-      
-      // 맨 아래로 스크롤
-      requestAnimationFrame(() => {
-        scrollToBottom();
+      // 1. 서버에 메시지 전송 (웹소켓 publish)
+      client.publish({
+        destination: `/chat/send-message/${roomId}`,
+        body: JSON.stringify(messageWithTempId) // 임시 ID가 포함된 메시지 전송
       });
 
-      return sorted;
-    });
+      // 2. 메시지를 로컬 상태에 즉시 추가하여 화면에 표시
+      setMessages(prev => {
+        // 기존 메시지 중 동일한 임시 ID가 있으면 업데이트 (혹시 모를 중복 방지), 없으면 새로 추가
+        const updated = prev.some(m => m.messageId === messageWithTempId.messageId)
+          ? prev.map(m => m.messageId === messageWithTempId.messageId ? messageWithTempId : m)
+          : [...prev, messageWithTempId];
+
+        const sorted = [...updated].sort(
+          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+        );
+
+        // 맨 아래로 스크롤
+        scrollToBottom();
+
+        return sorted;
+      });
+    } else {
+      // isTemporary가 false일 경우 (예: 이미지 메시지) 서버로만 전송
+      client.publish({
+        destination: `/chat/send-message/${roomId}`,
+        body: JSON.stringify(messageToSend)
+      });
+    }
 
     // 입력 필드 초기화
     setContent('');
@@ -605,7 +627,7 @@ const ChatRoom = () => {
           <div style={{ color: '#dc3545', marginBottom: '16px' }}>
             {initState.errorMessage}
           </div>
-          <button 
+          <button
             onClick={() => navigate('/')}
             style={{
               padding: '8px 16px',
@@ -660,7 +682,7 @@ const ChatRoom = () => {
             onLeaveRoom={handleLeaveRoom}
           />
 
-          <div 
+          <div
             ref={messageContainerRef}
             style={{
               flex: 1,
@@ -670,7 +692,7 @@ const ChatRoom = () => {
               minHeight: 0,
               position: 'relative'
             }}>
-            
+
             {/* ✅ 초기 로딩 상태 표시 (깜빡임 없이) */}
             {!isFullyLoaded && (
               <div style={{
@@ -694,7 +716,7 @@ const ChatRoom = () => {
                 }} />
               </div>
             )}
-            
+
             {/* 무한 스크롤 로딩 */}
             {isLoadingMessages && hasMoreMessages && (
               <div style={{
@@ -714,7 +736,7 @@ const ChatRoom = () => {
                 ⏳ 메시지 로딩 중...
               </div>
             )}
-            
+
             {/* 메시지 끝 표시 */}
             {!hasMoreMessages && messages.length > 0 && !isInitialLoad && (
               <div style={{
@@ -730,9 +752,9 @@ const ChatRoom = () => {
                 💬 모든 메시지를 불러왔습니다
               </div>
             )}
-            
+
             <div ref={messagesStartRef} />
-            
+
             {/* ✅ 메시지 목록은 항상 렌더링 (비어있어도) */}
             <MessageList
               messages={messages}
@@ -766,7 +788,7 @@ const ChatRoom = () => {
               setContent={setContent}
               language={language}
               setLanguage={setLanguage}
-              sendMessage={sendMessage}
+              // sendMessage={sendMessage} // 이 부분을 handleUnifiedSend로 대체
               handleUnifiedSend={handleUnifiedSend}
               setImageFile={setImageFile}
               imagePreviewUrl={imagePreviewUrl}
