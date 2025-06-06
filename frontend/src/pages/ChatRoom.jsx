@@ -153,11 +153,6 @@ const ChatRoom = () => {
           ...prev,
           isMessagesLoaded: true
         }));
-        // ✅ 초기 로드 완료 후 맨 아래로 스크롤
-        setIsInitialLoad(false); // 먼저 false로 설정하여 아래 useEffect가 발동하도록
-        // requestAnimationFrame(() => { // scrollToBottom 내부에 requestAnimationFrame이 있으므로 여기서는 생략
-        //   scrollToBottom();
-        // });
       }
 
       // 커서와 hasMore 상태 업데이트
@@ -171,9 +166,8 @@ const ChatRoom = () => {
       console.error('❌ Error fetching messages:', error);
     } finally {
       setIsLoadingMessages(false);
-      // setIsInitialLoad(false); // 이 위치는 초기 로드 완료 후 맨 아래로 스크롤 로직에 방해가 될 수 있음
     }
-  }, [roomId]); // scrollToBottom을 의존성 배열에서 제거 (내부에서 requestAnimationFrame 처리)
+  }, [roomId]);
 
   // 3. 로그인 유저 정보 가져오기
   const fetchCurrentUser = useCallback(async () => {
@@ -229,11 +223,11 @@ const ChatRoom = () => {
   const stompClientRef = useWebSocket({
     roomId: initState.isRoomValidated ? roomId : null,
     onMessageReceived: (received) => {
+      // ⭐ 서버에서 받은 메시지만을 로컬 상태에 추가/업데이트
       setMessages(prev => {
-        // ⭐ 서버에서 받은 메시지로 기존 (임시) 메시지를 업데이트하거나 새 메시지 추가
         // 동일한 messageId를 가진 메시지가 이미 존재하면 업데이트하고, 없으면 추가
         const updated = prev.some(m => m.messageId === received.messageId)
-          ? prev.map(m => m.messageId === received.messageId ? { ...received, isSending: false } : m) // isSending 상태 업데이트
+          ? prev.map(m => m.messageId === received.messageId ? received : m)
           : [...prev, received];
 
         const sorted = [...updated].sort((a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime());
@@ -243,6 +237,7 @@ const ChatRoom = () => {
         if (messageContainerRef.current) {
           const { scrollTop, clientHeight, scrollHeight } = messageContainerRef.current;
           const isNearBottom = (scrollTop + clientHeight) >= (scrollHeight - 100); // 100px 여유
+          // 새 메시지가 나(currentUser)의 메시지이거나, 스크롤이 거의 맨 아래에 있을 때만 스크롤
           if (isNearBottom || received.senderId === currentUser?.userId) {
             scrollToBottom();
           }
@@ -353,23 +348,23 @@ const ChatRoom = () => {
   // roomId가 설정되고 방 정보가 유효하며, 초기 로드가 아직 안된 경우 메시지 로드
   useEffect(() => {
     // isInitialLoad가 true일 때만 fetchMessages를 호출하여 초기 로드를 제어
-    // fetchMessages 내부에서 isInitialLoad를 false로 변경하고 scrollToBottom 호출
     if (roomId && initState.isRoomValidated && isInitialLoad) {
       fetchMessages();
+      setIsInitialLoad(false); // 초기 로드 후 바로 false로 설정
     }
   }, [roomId, initState.isRoomValidated, isInitialLoad, fetchMessages]);
 
-  // 메시지 로드 후 스크롤 위치 조정 (무한 스크롤 시에만 restoreScrollPosition 호출)
+  // 메시지 로드 후 스크롤 위치 조정
   useEffect(() => {
-    // isInitialLoad가 false일 때만 restoreScrollPosition을 호출 (추가 메시지 로드 시)
-    // 초기 로드 시에는 fetchMessages 내에서 scrollToBottom이 직접 호출됨
-    if (!isInitialLoad && messages.length > 0 && isLoadingMessages) { // isLoadingMessages 조건 추가
+    // 초기 로딩이 완료된 후 메시지가 있고 더 이상 로딩 중이 아닐 때 맨 아래로 스크롤
+    // isInitialLoad가 false일 때만 실행하며, isLoadingMessages가 false일 때 즉시 스크롤
+    if (!isInitialLoad && messages.length > 0 && !isLoadingMessages) {
+      scrollToBottom();
+    } else if (!isInitialLoad && messages.length > 0 && isLoadingMessages) {
+      // 추가 메시지 로드 중일 때 스크롤 위치 복원
       requestAnimationFrame(() => {
         restoreScrollPosition();
       });
-    } else if (isInitialLoad === false && messages.length > 0 && !isLoadingMessages) {
-      // 초기 로딩이 완료된 후, 메시지가 있고 더 이상 로딩 중이 아닐 때 맨 아래로 스크롤 (초기 로드 완료 시)
-      scrollToBottom();
     }
   }, [messages, isInitialLoad, restoreScrollPosition, isLoadingMessages, scrollToBottom]);
 
@@ -464,21 +459,18 @@ const ChatRoom = () => {
         const formData = new FormData();
         formData.append('image', imageFile);
 
-        // 이미지 파일을 먼저 업로드하고 ID를 받습니다.
         const response = await axiosInstance.post('/send-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
         const imageId = response.data;
 
-        // 이미지 ID를 포함하여 메시지를 웹소켓으로 보냅니다.
-        // 이미지의 경우 임시 전송 로직을 사용하지 않고, 서버에서 받은 응답으로만 처리
-        // (즉, 웹소켓 onMessageReceived를 통해 이미지가 수신될 때만 화면에 표시)
+        // 이미지 메시지는 서버에서 완전한 메시지를 받아올 때까지 화면에 표시하지 않음
         sendMessage({
           type: 'IMAGE',
           content: '', // 이미지 메시지는 content가 비어있을 수 있습니다.
           imageFileId: imageId
-        }, false); // isTemporary = false로 설정하여 임시 메시지 생성 방지
+        });
 
         setImageFile(null);
         setImagePreviewUrl(null);
@@ -487,13 +479,13 @@ const ChatRoom = () => {
         alert("이미지 전송에 실패했습니다. 다시 시도해주세요.");
       }
     } else {
-      // 텍스트, 코드 메시지 전송 (임시 전송 로직 사용)
+      // 텍스트, 코드 메시지 전송 (임시 메시지 로직 제거)
       sendMessage();
     }
   };
 
-  // 메시지 전송
-  const sendMessage = (overrideMessage = null, isTemporary = true) => { // isTemporary 파라미터 추가
+  // 메시지 전송 (임시 메시지 로직 제거)
+  const sendMessage = (overrideMessage = null) => { // isTemporary 파라미터 제거
     const client = stompClientRef.current;
 
     if (!roomId || !initState.isRoomValidated) {
@@ -526,48 +518,12 @@ const ChatRoom = () => {
       return;
     }
 
-    // ⭐ 중요: 서버에 보낼 메시지에 임시 messageId를 추가하고 로컬 상태에 즉시 반영
-    // 이미지를 제외하고 텍스트/코드 메시지에만 임시 전송 로직 적용
-    if (isTemporary) { // isTemporary가 true일 때만 임시 메시지 생성
-      const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const messageWithTempId = {
-        ...messageToSend,
-        messageId: tempMessageId, // 임시 ID
-        senderId: currentUser.userId,
-        senderName: currentUser.nickname,
-        profileImageUrl: currentUser.profileImg || '',
-        isSending: true // 전송 중 상태 표시 (옵션)
-      };
-
-      // 1. 서버에 메시지 전송 (웹소켓 publish)
-      client.publish({
-        destination: `/chat/send-message/${roomId}`,
-        body: JSON.stringify(messageWithTempId) // 임시 ID가 포함된 메시지 전송
-      });
-
-      // 2. 메시지를 로컬 상태에 즉시 추가하여 화면에 표시
-      setMessages(prev => {
-        // 기존 메시지 중 동일한 임시 ID가 있으면 업데이트 (혹시 모를 중복 방지), 없으면 새로 추가
-        const updated = prev.some(m => m.messageId === messageWithTempId.messageId)
-          ? prev.map(m => m.messageId === messageWithTempId.messageId ? messageWithTempId : m)
-          : [...prev, messageWithTempId];
-
-        const sorted = [...updated].sort(
-          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-        );
-
-        // 맨 아래로 스크롤
-        scrollToBottom();
-
-        return sorted;
-      });
-    } else {
-      // isTemporary가 false일 경우 (예: 이미지 메시지) 서버로만 전송
-      client.publish({
-        destination: `/chat/send-message/${roomId}`,
-        body: JSON.stringify(messageToSend)
-      });
-    }
+    // ⭐ 중요: 서버에 보낼 메시지를 즉시 로컬 상태에 추가하지 않고,
+    // 서버에서 다시 브로드캐스트된 메시지만을 onMessageReceived에서 처리
+    client.publish({
+      destination: `/chat/send-message/${roomId}`,
+      body: JSON.stringify(messageToSend)
+    });
 
     // 입력 필드 초기화
     setContent('');
