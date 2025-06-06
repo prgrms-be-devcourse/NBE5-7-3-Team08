@@ -186,6 +186,7 @@ const ChatRoom = () => {
       }
 
       const user = await res.json();
+      console.log("현재 사용자 정보:", user); 
       setCurrentUser(user);
       
       // ✅ 사용자 정보 로드 완료 상태 업데이트
@@ -226,8 +227,9 @@ const ChatRoom = () => {
     roomId: initState.isRoomValidated ? roomId : null,
     onMessageReceived: (received) => {
       setMessages(prev => {
+        // ⭐ 서버에서 받은 메시지로 기존 (임시) 메시지를 업데이트하거나 새 메시지 추가
         const updated = prev.some(m => m.messageId === received.messageId)
-          ? prev.map(m => m.messageId === received.messageId ? received : m)
+          ? prev.map(m => m.messageId === received.messageId ? { ...received, isSending: false } : m) // isSending 상태 업데이트
           : [...prev, received];
 
         const sorted = [...updated].sort((a, b) => new Date(a.sendAt) - new Date(b.sendAt));
@@ -244,13 +246,12 @@ const ChatRoom = () => {
 
   // 스크롤 위치 복원 함수 (무한 스크롤 시 사용)
   const restoreScrollPosition = useCallback(() => {
-    if (!messageContainerRef.current) return; // isInitialLoad 조건 제거
+    if (!messageContainerRef.current) return;
     
     const container = messageContainerRef.current;
     const newScrollHeight = container.scrollHeight;
     const oldScrollHeight = prevScrollHeightRef.current;
     
-    // 이 로직은 '추가 로드' 시에만 유효하도록 조정
     if (newScrollHeight > oldScrollHeight) {
       const scrollDiff = newScrollHeight - oldScrollHeight;
       const currentScrollTop = container.scrollTop;
@@ -260,7 +261,7 @@ const ChatRoom = () => {
     }
     
     prevScrollHeightRef.current = newScrollHeight;
-  }, []); // isInitialLoad 의존성 제거
+  }, []);
 
   // 스크롤 이벤트 핸들러
   const handleScroll = useCallback(() => {
@@ -450,14 +451,18 @@ const ChatRoom = () => {
         const formData = new FormData();
         formData.append('image', imageFile);
 
+        // 이미지 파일을 먼저 업로드하고 ID를 받습니다.
         const response = await axiosInstance.post('/send-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
         const imageId = response.data;
+        
+        // 이미지 ID를 포함하여 메시지를 웹소켓으로 보냅니다.
+        // sendMessage 함수 내부에서 currentUser 정보를 활용할 것이므로 여기서는 넘기지 않아도 됩니다.
         sendMessage({
           type: 'IMAGE',
-          content: '',
+          content: '', // 이미지 메시지는 content가 비어있을 수 있습니다.
           imageFileId: imageId
         });
 
@@ -467,6 +472,7 @@ const ChatRoom = () => {
         console.error("이미지 전송 실패: ", err);
       }
     } else {
+      // 텍스트, 코드 메시지 전송
       sendMessage();
     }
   };
@@ -485,6 +491,12 @@ const ChatRoom = () => {
       return;
     }
 
+    if (!currentUser) {
+      console.warn('Current user not loaded yet. Cannot send message.');
+      alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     let baseMessage = {
       content: content,
       type: inputMode,
@@ -492,18 +504,50 @@ const ChatRoom = () => {
       ...(inputMode === 'CODE' && { language })
     };
 
-    const message = overrideMessage ? { ...baseMessage, ...overrideMessage } : baseMessage;
+    const messageToSend = overrideMessage ? { ...baseMessage, ...overrideMessage } : baseMessage;
 
-    const trimmed = String(message.content).trim();
-    if (message.type !== 'IMAGE' && trimmed === '') {
+    const trimmed = String(messageToSend.content).trim();
+    if (messageToSend.type !== 'IMAGE' && trimmed === '') {
       return;
     }
 
+    // ⭐ 중요: 서버에 보낼 메시지에 임시 messageId를 추가하고 로컬 상태에 즉시 반영
+    const tempMessageId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const messageWithTempId = {
+      ...messageToSend,
+      messageId: tempMessageId, // 임시 ID
+      senderId: currentUser.userId, 
+      senderName: currentUser.nickname, 
+      profileImageUrl: currentUser.profileImg || '', 
+      isSending: true // 전송 중 상태 표시 (옵션)
+    };
+
+    // 1. 서버에 메시지 전송 (웹소켓 publish)
     client.publish({
       destination: `/chat/send-message/${roomId}`,
-      body: JSON.stringify(message)
+      body: JSON.stringify(messageWithTempId) // 임시 ID가 포함된 메시지 전송
     });
 
+    // 2. 메시지를 로컬 상태에 즉시 추가하여 화면에 표시
+    setMessages(prev => {
+      // 기존 메시지 중 동일한 임시 ID가 있으면 업데이트 (혹시 모를 중복 방지), 없으면 새로 추가
+      const updated = prev.some(m => m.messageId === messageWithTempId.messageId)
+        ? prev.map(m => m.messageId === messageWithTempId.messageId ? messageWithTempId : m)
+        : [...prev, messageWithTempId];
+
+      const sorted = [...updated].sort(
+        (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+      );
+      
+      // 맨 아래로 스크롤
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+
+      return sorted;
+    });
+
+    // 입력 필드 초기화
     setContent('');
     setInputMode('TEXT');
   };
