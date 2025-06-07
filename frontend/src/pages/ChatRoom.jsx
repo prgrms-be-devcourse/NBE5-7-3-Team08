@@ -31,13 +31,13 @@ const ChatRoom = () => {
   const messagesEndRef = useRef(null);
   const messagesStartRef = useRef(null);
   const messageContainerRef = useRef(null);
-  const prevScrollHeightRef = useRef(0);
+  const prevScrollHeightRef = useRef(0); // 이전 스크롤 높이 저장
   const navigate = useNavigate();
 
   const [roomName, setRoomName] = useState("로딩 중...");
   const [roomId, setRoomId] = useState(null);
 
-  // ✅ 초기화 상태를 하나로 통합하고 단계별로 관리
+  // 초기화 상태를 하나로 통합하고 단계별로 관리
   const [initState, setInitState] = useState({
     isRoomValidated: false,
     isUserLoaded: false,
@@ -46,7 +46,7 @@ const ChatRoom = () => {
     errorMessage: ''
   });
 
-  // ✅ 전체 로딩 상태를 계산으로 처리 (별도 상태 없음)
+  // 전체 로딩 상태를 계산으로 처리
   const isFullyLoaded = initState.isRoomValidated &&
     initState.isUserLoaded &&
     initState.isMessagesLoaded;
@@ -71,7 +71,7 @@ const ChatRoom = () => {
       setRoomId(roomData.roomId);
       setRoomName(roomData.roomName);
 
-      // ✅ 한 번에 상태 업데이트
+      // 한 번에 상태 업데이트
       setInitState(prev => ({
         ...prev,
         isRoomValidated: true
@@ -138,6 +138,9 @@ const ChatRoom = () => {
       );
 
       if (isLoadMore) {
+        // 이전 스크롤 높이를 저장
+        prevScrollHeightRef.current = messageContainerRef.current ? messageContainerRef.current.scrollHeight : 0;
+
         // 이전 메시지들을 현재 메시지 앞에 추가
         setMessages(prev => {
           const existingIds = new Set(prev.map(msg => msg.messageId));
@@ -148,7 +151,7 @@ const ChatRoom = () => {
         // 초기 로드
         setMessages(sortedMessages);
 
-        // ✅ 초기 메시지 로드 완료 상태 업데이트
+        // 초기 메시지 로드 완료 상태 업데이트
         setInitState(prev => ({
           ...prev,
           isMessagesLoaded: true
@@ -186,7 +189,7 @@ const ChatRoom = () => {
       console.log("현재 사용자 정보:", user);
       setCurrentUser(user);
 
-      // ✅ 사용자 정보 로드 완료 상태 업데이트
+      // 사용자 정보 로드 완료 상태 업데이트
       setInitState(prev => ({
         ...prev,
         isUserLoaded: true
@@ -223,7 +226,7 @@ const ChatRoom = () => {
   const stompClientRef = useWebSocket({
     roomId: initState.isRoomValidated ? roomId : null,
     onMessageReceived: (received) => {
-      // ⭐ 서버에서 받은 메시지만을 로컬 상태에 추가/업데이트
+      // 서버에서 받은 메시지만을 로컬 상태에 추가/업데이트
       setMessages(prev => {
         // 동일한 messageId를 가진 메시지가 이미 존재하면 업데이트하고, 없으면 추가
         const updated = prev.some(m => m.messageId === received.messageId)
@@ -258,13 +261,9 @@ const ChatRoom = () => {
 
     if (newScrollHeight > oldScrollHeight) {
       const scrollDiff = newScrollHeight - oldScrollHeight;
-      const currentScrollTop = container.scrollTop;
-      const newScrollTop = currentScrollTop + scrollDiff;
-
-      container.scrollTop = newScrollTop;
+      // 이전 스크롤 위치에 새로 추가된 메시지 높이만큼 더해서 조정
+      container.scrollTop = container.scrollTop + scrollDiff;
     }
-
-    prevScrollHeightRef.current = newScrollHeight;
   }, []);
 
   // 스크롤 이벤트 핸들러
@@ -274,10 +273,11 @@ const ChatRoom = () => {
     const container = messageContainerRef.current;
     const { scrollTop, scrollHeight } = container;
 
-    const isAtTop = scrollTop <= 150;
+    const isAtTop = scrollTop <= 150; // 상단에서 150px 이내
     const canLoadMore = !isLoadingMessages && hasMoreMessages && cursor;
 
     if (isAtTop && canLoadMore) {
+      // 메시지를 불러오기 전에 현재 스크롤 높이를 저장
       prevScrollHeightRef.current = scrollHeight;
       fetchMessages(cursor, true);
     }
@@ -291,7 +291,7 @@ const ChatRoom = () => {
     let timeoutId = null;
     const debouncedHandleScroll = () => {
       if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleScroll, 150);
+      timeoutId = setTimeout(handleScroll, 150); // 디바운싱
     };
 
     container.addEventListener('scroll', debouncedHandleScroll, { passive: true });
@@ -301,7 +301,7 @@ const ChatRoom = () => {
     };
   }, [handleScroll]);
 
-  // ✅ 초기화 로직 - 한 번에 모든 상태 리셋
+  // 초기화 로직 - 한 번에 모든 상태 리셋
   useEffect(() => {
     if (!inviteCode) {
       navigate("/error");
@@ -309,7 +309,7 @@ const ChatRoom = () => {
     }
 
     const initializeRoom = async () => {
-      // ✅ 한 번에 모든 초기 상태 설정
+      // 한 번에 모든 초기 상태 설정
       setInitState({
         isRoomValidated: false,
         isUserLoaded: false,
@@ -323,6 +323,7 @@ const ChatRoom = () => {
       setHasMoreMessages(true);
       setIsInitialLoad(true); // 초기 로딩 상태를 true로 재설정
       setIsLoadingMessages(false);
+      prevScrollHeightRef.current = 0; // 스크롤 높이 참조 초기화
 
       try {
         // 방 정보와 사용자 정보를 병렬로 로드
@@ -356,15 +357,26 @@ const ChatRoom = () => {
 
   // 메시지 로드 후 스크롤 위치 조정
   useEffect(() => {
-    // 초기 로딩이 완료된 후 메시지가 있고 더 이상 로딩 중이 아닐 때 맨 아래로 스크롤
-    // isInitialLoad가 false일 때만 실행하며, isLoadingMessages가 false일 때 즉시 스크롤
-    if (!isInitialLoad && messages.length > 0 && !isLoadingMessages) {
-      scrollToBottom();
-    } else if (!isInitialLoad && messages.length > 0 && isLoadingMessages) {
-      // 추가 메시지 로드 중일 때 스크롤 위치 복원
-      requestAnimationFrame(() => {
-        restoreScrollPosition();
-      });
+    // 초기 로딩이 완료되고 메시지가 있을 때만 스크롤 조정
+    if (!isInitialLoad && messages.length > 0) {
+      if (isLoadingMessages) {
+        // 메시지 추가 로드 중일 때 스크롤 위치 복원
+        // DOM 업데이트가 완전히 반영되도록 다음 프레임에서 실행
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => { // 한 번 더 requestAnimationFrame을 사용하여 확실히 DOM 반영 후
+            restoreScrollPosition();
+          });
+        });
+      } else {
+        // 초기 로드 완료 시 (isInitialLoad가 false로 변하는 시점) 맨 아래로 스크롤
+        // 이 조건은 컴포넌트 마운트 후 최초 메시지 로드 시에만 적용됩니다.
+        if (prevScrollHeightRef.current === 0 && messageContainerRef.current) {
+          // prevScrollHeightRef가 0이라는 것은 초기 로드이거나, 메시지가 없었다가 처음 생겼다는 의미
+          // (prevScrollHeightRef는 isLoadMore일 때만 업데이트되므로, 이 조건은 첫 로드에만 해당)
+          scrollToBottom();
+        }
+        // 새 메시지 수신으로 인한 스크롤은 useWebSocket 내부 onMessageReceived에서 처리
+      }
     }
   }, [messages, isInitialLoad, restoreScrollPosition, isLoadingMessages, scrollToBottom]);
 
@@ -485,7 +497,7 @@ const ChatRoom = () => {
   };
 
   // 메시지 전송 (임시 메시지 로직 제거)
-  const sendMessage = (overrideMessage = null) => { // isTemporary 파라미터 제거
+  const sendMessage = (overrideMessage = null) => {
     const client = stompClientRef.current;
 
     if (!roomId || !initState.isRoomValidated) {
@@ -518,7 +530,7 @@ const ChatRoom = () => {
       return;
     }
 
-    // ⭐ 중요: 서버에 보낼 메시지를 즉시 로컬 상태에 추가하지 않고,
+    // 서버에 보낼 메시지를 즉시 로컬 상태에 추가하지 않고,
     // 서버에서 다시 브로드캐스트된 메시지만을 onMessageReceived에서 처리
     client.publish({
       destination: `/chat/send-message/${roomId}`,
@@ -568,7 +580,7 @@ const ChatRoom = () => {
     setContextMenuId(null);
   };
 
-  // ✅ 에러 상태 처리
+  // 에러 상태 처리
   if (initState.hasError) {
     return (
       <div style={{
@@ -626,7 +638,7 @@ const ChatRoom = () => {
           flexDirection: 'column',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
           overflow: 'hidden',
-          // ✅ 로딩 중에도 레이아웃 유지하되 투명도로 처리
+          // 로딩 중에도 레이아웃 유지하되 투명도로 처리
           opacity: isFullyLoaded ? 1 : 0.7,
           transition: 'opacity 0.3s ease'
         }}>
@@ -649,7 +661,7 @@ const ChatRoom = () => {
               position: 'relative'
             }}>
 
-            {/* ✅ 초기 로딩 상태 표시 (깜빡임 없이) */}
+            {/* 초기 로딩 상태 표시 (깜빡임 없이) */}
             {!isFullyLoaded && (
               <div style={{
                 position: 'absolute',
@@ -711,7 +723,7 @@ const ChatRoom = () => {
 
             <div ref={messagesStartRef} />
 
-            {/* ✅ 메시지 목록은 항상 렌더링 (비어있어도) */}
+            {/* 메시지 목록은 항상 렌더링 (비어있어도) */}
             <MessageList
               messages={messages}
               currentUser={currentUser}
@@ -734,7 +746,7 @@ const ChatRoom = () => {
             padding: '16px 24px',
             display: 'flex',
             flexDirection: 'column',
-            // ✅ 로딩 중에는 입력 비활성화
+            // 로딩 중에는 입력 비활성화
             pointerEvents: isFullyLoaded ? 'auto' : 'none'
           }}>
             <MessageInput
@@ -744,7 +756,6 @@ const ChatRoom = () => {
               setContent={setContent}
               language={language}
               setLanguage={setLanguage}
-              // sendMessage={sendMessage} // 이 부분을 handleUnifiedSend로 대체
               handleUnifiedSend={handleUnifiedSend}
               setImageFile={setImageFile}
               imagePreviewUrl={imagePreviewUrl}
