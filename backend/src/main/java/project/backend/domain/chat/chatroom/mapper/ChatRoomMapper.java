@@ -73,7 +73,7 @@ public class ChatRoomMapper {
 		return MyChatRoomResponse.builder()
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
-			.participantCount(chatRoom.getParticipants().size())
+			.participantCount(chatRoom.getActiveParticipantCount())
 			.inviteCode(chatRoom.getInviteCode())
 			.build();
 	}
