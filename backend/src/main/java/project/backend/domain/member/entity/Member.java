@@ -45,6 +45,7 @@ public class Member {
 	private String email;
 
 	@Setter
+	@Column(nullable = false)
 	private String password;
 
 	@Column(updatable = false)

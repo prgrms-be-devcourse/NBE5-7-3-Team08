@@ -63,7 +63,9 @@ function App() {
         <form onSubmit={handleSubmit}>
 
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">
+              Username<span style={{ color: 'red' }}> *</span>
+            </label>
             <input
               id="username"
               type="username"
@@ -77,7 +79,9 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password<span style={{ color: 'red' }}> *</span>
+            </label>
             <input
               id="password"
               type="password"
@@ -90,7 +94,9 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="nickname">Nickname</label>
+            <label htmlFor="nickname">
+              Nickname<span style={{ color: 'red' }}> *</span>
+            </label>
             <input
               id="nickname"
               type="text"
@@ -110,7 +116,6 @@ function App() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일을 입력해주세요"
-              required
             />
           </div>
 

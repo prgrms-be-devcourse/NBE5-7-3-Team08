@@ -17,7 +17,6 @@ public class SignUpRequest {
 	@Size(min = 3, message = "닉네임은 최소 3자 이상이여야 합니다.")
 	private String nickname;
 
-	@NotBlank(message = "이메일은 필수입니다.")
 	@Email(message = "올바른 이메일 형식이어야 합니다.")
 	private String email;
 

@@ -104,11 +104,6 @@ public class MemberService {
 		}
 	}
 
-	public Member getMemberByEmail(String email) {
-		return memberRepository.findByEmail(email)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-	}
-
 	public Member getMemberByUsername(String username) {
 		return memberRepository.findByUsername(username)
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
