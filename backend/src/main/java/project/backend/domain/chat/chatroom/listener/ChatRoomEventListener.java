@@ -58,9 +58,6 @@ public class ChatRoomEventListener {
 		log.debug("🔥 프로필 업데이트 이벤트 수신: userId={}, nickname={}",
 			updateEvent.userId(), updateEvent.nickname());
 
-		simpMessagingTemplate.convertAndSend("/topic/profile-update",
-			new ProfileUpdateEvent(updateEvent.userId(), updateEvent.nickname(),
-				updateEvent.profileImageUrl())
-		);
+		simpMessagingTemplate.convertAndSend("/topic/profile-update", updateEvent);
 	}
 }

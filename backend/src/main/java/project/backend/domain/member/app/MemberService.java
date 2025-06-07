@@ -64,11 +64,9 @@ public class MemberService {
 		boolean isUpdated = updateMemberFields(targetMember, request);
 
 		if (isUpdated) {
-			eventPublisher.publishEvent(new ProfileUpdateEvent(
-				targetMember.getId(),
-				targetMember.getNickname(),
-				targetMember.getProfileImage().getStoreFileName()
-			));
+			eventPublisher.publishEvent(
+				ProfileUpdateEvent.of(targetMember)
+			);
 		}
 
 		return MemberMapper.toResponse(targetMember);
