@@ -54,12 +54,6 @@ public class ChatRoomController {
 	public InviteJoinResponse joinChatRoom(@RequestBody InviteJoinRequest request,
 		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
-		if (memberDetails == null) {
-			Long roomId = chatRoomService.getRoomIdByInviteCode(request.getInviteCode());
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER, roomId,
-				request.getInviteCode());
-		}
-
 		return chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}
 
