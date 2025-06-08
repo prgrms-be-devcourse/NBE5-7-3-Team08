@@ -63,5 +63,14 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
     WHERE cp.chatRoom.id = :roomId
     """)
 	void deleteByChatRoomId(@Param("roomId") Long roomId);
+
+	@Query("""
+    SELECT cp 
+    FROM ChatParticipant cp 
+    WHERE cp.chatRoom.id = :roomId 
+      AND cp.isOwner = true 
+      AND cp.isActive = true
+    """)
+	Optional<ChatParticipant> findByChatRoomIdAndIsOwnerTrue(@Param("roomId") Long roomId);
 }
 

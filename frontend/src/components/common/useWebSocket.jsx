@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom';
 const useWebSocket = ({
     roomId,
     onMessageReceived,
+    onRoomDeleted
 }) => {
     const stompClientRef = useRef(null);
     const subscriptionRef = useRef(null);
     const hasConnectedRef = useRef(false); // 실제 연결에 성공했는지 추적
     const keepAliveIntervalRef = useRef(null);
+    const deleteSubscriptionRef = useRef(null)
 
     const navigate = useNavigate(); 
 
@@ -46,6 +48,20 @@ const useWebSocket = ({
                     onMessageReceived(received)
                 } catch (e) {
                 console.error("📛 Failed to parse incoming message", e);
+                }
+            });
+
+            // 방 삭제 구독 추가
+            deleteSubscriptionRef.current = client.subscribe(`/topic/chat/${roomId}/deleted`, (message) => {
+                try {
+                    const deleteData = JSON.parse(message.body);
+                    console.log("🗑️ Room deletion received:", deleteData);
+                    
+                    if (onRoomDeleted && typeof onRoomDeleted === 'function') {
+                        onRoomDeleted(deleteData);
+                    }
+                } catch (e) {
+                    console.error("📛 Failed to parse delete message", e);
                 }
             });
 
@@ -85,6 +101,11 @@ const useWebSocket = ({
                 subscriptionRef.current.unsubscribe();
                 subscriptionRef.current = null;
                 console.log("🔌 Subscription unsubscribed.");
+            }
+             if (deleteSubscriptionRef.current) {
+                deleteSubscriptionRef.current.unsubscribe();
+                deleteSubscriptionRef.current = null;
+                console.log("🗑️ Delete subscription unsubscribed.");
             }
             if (client && client.active) {
                 client.deactivate().then(() => {

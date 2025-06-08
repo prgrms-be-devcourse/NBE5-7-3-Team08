@@ -23,6 +23,7 @@ import project.backend.domain.chat.chatroom.dto.EntryRoomResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RoomInfoResponse;
+import project.backend.domain.chat.chatroom.dto.event.DeleteChatRoomEvent;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
@@ -230,7 +231,15 @@ public class ChatRoomService {
 
 		memberService.getMemberById(memberId).setRecentRoomId(room.getId()); //recentRoomId 업데이트
 
-		return new EntryRoomResponse(room.getId(), room.getName());
+		Long ownerId = findOwnerId(room.getId());
+
+		return new EntryRoomResponse(room.getId(), room.getName(), ownerId);
+	}
+
+	private Long findOwnerId(Long roomId) {
+		ChatParticipant owner = chatParticipantRepository.findByChatRoomIdAndIsOwnerTrue(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.OWNER_NOT_FOUND));
+		return owner.getParticipant().getId();
 	}
 
 	@Transactional(readOnly = true)
@@ -258,9 +267,9 @@ public class ChatRoomService {
 			throw new ChatRoomException(ChatRoomErrorCode.OWNER_PERMISSION_REQUIRED);
 		}
 
-		chatMessageRepository.deleteByChatRoomId(roomId);
-
-		chatParticipantRepository.deleteByChatRoomId(roomId);
+		eventPublisher.publishEvent(
+			new DeleteChatRoomEvent(roomId, room.getName())
+		);
 
 		chatRoomRepository.delete(room);
 	}

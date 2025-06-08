@@ -27,10 +27,12 @@ const ChatRoom = () => {
 
   const [roomName, setRoomName] = useState("로딩 중...");
   const [roomId, setRoomId] = useState(null);
-  
+  const [isOwner, setIsOwner] = useState(false);
+  const [roomData, setRoomData] = useState(null);
   // 초기화 상태 관리
   const [isRoomValidated, setIsRoomValidated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [deleteNotification, setDeleteNotification] = useState(null);
 
   // 1. 방 정보 불러오기
   const fetchRoomInfo = async () => {
@@ -40,6 +42,8 @@ const ChatRoom = () => {
 
       setRoomId(roomData.roomId);
       setRoomName(roomData.roomName);
+      setRoomData(roomData);
+
       return roomData.roomId;
     } catch (error) {
       console.error('방 정보 조회 실패:', error);
@@ -51,7 +55,7 @@ const ChatRoom = () => {
   // 2. 메시지 목록 불러오기
   const fetchMessages = async (roomId) => {
     try {
-      const res = await axiosInstance.get(`/${roomId}/messages`); 
+      const res = await axiosInstance.get(`/${roomId}/messages`);
       const data = res.data;
 
       // 날짜 유효성 검사
@@ -68,7 +72,7 @@ const ChatRoom = () => {
 
       // sendAt 기준으로 메시지 정렬
       const sortedData = validatedData.sort(
-          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+        (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
       );
 
       setMessages(sortedData);
@@ -103,12 +107,15 @@ const ChatRoom = () => {
     onMessageReceived: (received) => {
       setMessages(prev => {
         const updated = prev.some(m => m.messageId === received.messageId)
-        ? prev.map(m => m.messageId === received.messageId ? received : m)
-        : [...prev, received];
+          ? prev.map(m => m.messageId === received.messageId ? received : m)
+          : [...prev, received];
 
         // sendAt 기준으로 정렬
         return [...updated].sort((a, b) => new Date(a.sendAt) - new Date(b.sendAt));
       });
+    },
+    onRoomDeleted: (eventMessage) => {  // 새로 추가
+      setDeleteNotification(eventMessage.content);
     }
   });
 
@@ -124,11 +131,11 @@ const ChatRoom = () => {
       setIsInitializing(true);
       setIsRoomValidated(false);
       setMessages([]); // 이전 채팅방 메시지 제거
-      
+
       try {
         // 1단계: 방 정보 검증 및 로딩
         const fetchedRoomId = await fetchRoomInfo();
-        
+
         if (!fetchedRoomId) {
           // 방 정보 로딩 실패 시 여기서 종료 (navigate는 fetchRoomInfo에서 처리)
           return;
@@ -136,7 +143,7 @@ const ChatRoom = () => {
 
         // 2단계: 방 검증 완료 표시 (이제 웹소켓 연결 가능)
         setIsRoomValidated(true);
-        
+
         // 3단계: 병렬로 사용자 정보와 메시지 로딩
         await Promise.all([
           fetchCurrentUser(),
@@ -154,6 +161,12 @@ const ChatRoom = () => {
     initializeRoom();
   }, [inviteCode]);
 
+  useEffect(() => {
+    if (currentUser && roomData && roomData.ownerId) {
+      setIsOwner(currentUser.id === roomData.ownerId);
+    }
+  }, [currentUser, roomData]);
+
   const handleLeaveRoom = async () => {
     try {
       await axiosInstance.delete(`/chat-rooms/${roomId}/leave`);
@@ -167,6 +180,17 @@ const ChatRoom = () => {
         err.message ||
         '나가기 실패';
 
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // 채팅방 삭제 함수
+  const handleDeleteRoom = async () => {
+    try {
+      await axiosInstance.delete(`/chat-rooms/${roomId}`);
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || '채팅방 삭제에 실패했습니다';
       return { success: false, error: errorMsg };
     }
   };
@@ -187,7 +211,7 @@ const ChatRoom = () => {
       setErrorMessage('채팅방이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    
+
     setIsSearching(true);
     setShowSearchSidebar(true);
     setSearchKeyword(keyword);
@@ -204,13 +228,13 @@ const ChatRoom = () => {
 
       const data = response.data;
       const validatedResults = (data.content || []).map(msg => {
-      const sendAt = new Date(msg.sendAt);
-      const isInvalid = !msg.sendAt || isNaN(sendAt.getTime());
+        const sendAt = new Date(msg.sendAt);
+        const isInvalid = !msg.sendAt || isNaN(sendAt.getTime());
 
-      return isInvalid
-        ? { ...msg, sendAt: new Date().toISOString() }
-        : msg;
-    });
+        return isInvalid
+          ? { ...msg, sendAt: new Date().toISOString() }
+          : msg;
+      });
 
       setSearchResults(validatedResults);
       setCurrentPage(data.pageable?.pageNumber || 0);
@@ -237,12 +261,12 @@ const ChatRoom = () => {
         behavior: 'smooth',
         block: 'center'
       });
-      
+
       // 깔끔한 하이라이트
       messageElement.style.backgroundColor = '#e8f4fd';
       messageElement.style.borderRadius = '6px';
       messageElement.style.transition = 'all 0.3s ease';
-      
+
       // 2초 후 제거
       setTimeout(() => {
         messageElement.style.backgroundColor = '';
@@ -292,13 +316,13 @@ const ChatRoom = () => {
   // 메시지 전송 (텍스트/코드/이미지 모두 처리)
   const sendMessage = (overrideMessage = null) => {
     const client = stompClientRef.current;
-    
+
     // 방 검증 상태 확인
     if (!roomId || !isRoomValidated) {
       alert('채팅방 정보를 로딩 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    
+
     if (!client || !client.connected) {
       alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
       return;
@@ -423,6 +447,8 @@ const ChatRoom = () => {
             inviteCode={inviteCode}
             onSearch={handleSearch} // 메시지 검색 api 요청 함수
             onLeaveRoom={handleLeaveRoom} // 방 나가기 api 요청 함수
+            onDeleteRoom={handleDeleteRoom}
+            isOwner={isOwner}
           />
 
           {/* 메시지 목록 */}
@@ -487,6 +513,63 @@ const ChatRoom = () => {
             onMessageClick={scrollToMessage}
           />
         )}
+
+        {/* 채팅방 삭제 알림 모달 - 맨 마지막에 추가 */}
+        {deleteNotification && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '32px',
+              borderRadius: '12px',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+              minWidth: '320px',
+              maxWidth: '400px'
+            }}>
+              <div style={{
+                fontSize: '20px',
+                marginBottom: '8px'
+              }}>
+                🗑️
+              </div>
+              <p style={{
+                fontSize: '16px',
+                marginBottom: '24px',
+                lineHeight: '1.5',
+                color: '#2d3748'
+              }}>
+                {deleteNotification}
+              </p>
+              <button
+                onClick={() => navigate('/')}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#2588F1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

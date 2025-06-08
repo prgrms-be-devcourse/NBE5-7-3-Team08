@@ -11,6 +11,7 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RoomInfoResponse;
+import project.backend.domain.chat.chatroom.dto.event.DeleteChatRoomEvent;
 import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
@@ -111,6 +112,17 @@ public class ChatRoomMapper {
 			.sender(leaveEvent.nickname())
 			.content(leaveEvent.nickname() + "님이 나갔습니다.")
 			.sendAt(leaveEvent.leaveAt())
+			.build();
+	}
+
+	public static EventMessageResponse toDeleteEventMessageResponse(DeleteChatRoomEvent deleteEvent) {
+		return EventMessageResponse.builder()
+			.messageId(null)  // 시스템 메시지는 저장하지 않으므로 null
+			.type(MessageType.EVENT)
+			.roomId(deleteEvent.roomId())
+			.sender("시스템")  // 또는 null
+			.content("채팅방 '" + deleteEvent.roomName() + "'이 삭제되었습니다.")
+			.sendAt(LocalDateTime.now())
 			.build();
 	}
 }
