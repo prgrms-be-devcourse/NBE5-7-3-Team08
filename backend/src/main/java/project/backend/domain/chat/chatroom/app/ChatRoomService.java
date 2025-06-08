@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
@@ -46,6 +47,7 @@ public class ChatRoomService {
 	private final MemberService memberService;
 	private final GitMessageService gitMessageService;
 	private final ApplicationEventPublisher eventPublisher;
+	private final ChatMessageRepository chatMessageRepository;
 
 	@Value("${github.email-key}")
 	private String githubEmailKey;
@@ -244,5 +246,23 @@ public class ChatRoomService {
 		}
 	}
 
+	@Transactional
+	public void deleteChatRoom(Long roomId, Long memberId) {
+		ChatRoom room = getRoomById(roomId);
+
+		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(
+				roomId, memberId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
+
+		if (!participant.isOwner()) {
+			throw new ChatRoomException(ChatRoomErrorCode.OWNER_PERMISSION_REQUIRED);
+		}
+
+		chatMessageRepository.deleteByChatRoomId(roomId);
+
+		chatParticipantRepository.deleteByChatRoomId(roomId);
+
+		chatRoomRepository.delete(room);
+	}
 }
 

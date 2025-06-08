@@ -124,5 +124,9 @@ public class ChatRoomController {
 		return chatRoomService.getRoomInfo(inviteCode, memberDetails.getId());
 	}
 
-
+	@DeleteMapping("/{roomId}")
+	public void deleteChatRoom(@PathVariable Long roomId,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+		chatRoomService.deleteChatRoom(roomId, memberDetails.getId());
+	}
 }
