@@ -55,8 +55,10 @@ export default function EditProfilePage() {
 
   const handleSavePersonalInfo = async () => {
     const formData = new FormData()
-    formData.append("nickname", nickname)
-    formData.append("email", email)
+    formData.append("request", new Blob([JSON.stringify({
+      nickname: nickname,
+      email: email
+    })], { type: "application/json"}));
     if (imageFile) {
       formData.append("profileImg", imageFile)
     }

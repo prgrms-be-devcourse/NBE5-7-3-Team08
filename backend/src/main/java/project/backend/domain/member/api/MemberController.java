@@ -3,9 +3,9 @@ package project.backend.domain.member.api;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.MemberInfoUpdateRequest;
@@ -25,9 +25,12 @@ public class MemberController {
 	}
 
 	@PutMapping(value = "/info", consumes = "multipart/form-data")
-	public MemberResponse updateMemberDetails(Authentication authentication,
-		@ModelAttribute @Valid MemberInfoUpdateRequest request) {
-		return memberService.updateMemberInfo(authentication, request);
+	public MemberResponse updateMemberInfo(
+		Authentication authentication,
+		@RequestPart("request") @Valid MemberInfoUpdateRequest request,
+		@RequestPart(value = "profileImg", required = false) MultipartFile profileImg
+	) {
+		return memberService.updateMemberInfo(authentication, request, profileImg);
 	}
 
 	@PutMapping("/password")

@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import project.backend.domain.imagefile.ImageFileService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.PasswordChangeRequest;
@@ -57,28 +58,31 @@ public class MemberService {
 		return MemberMapper.toResponse(newMember);
 	}
 
-	public MemberResponse updateMemberInfo(Authentication auth, MemberInfoUpdateRequest request) {
+	public MemberResponse updateMemberInfo(Authentication auth, MemberInfoUpdateRequest request,
+		MultipartFile file) {
+
 		MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
 		Member targetMember = getMemberById(memberDetails.getId());
 
-		doUpdateMemberInfo(targetMember, request);
+		doUpdateMemberInfo(targetMember, request, file);
 
 		eventPublisher.publishEvent(ProfileUpdateEvent.of(targetMember));
 
 		return MemberMapper.toResponse(targetMember);
 	}
 
-	private void doUpdateMemberInfo(Member targetMember, MemberInfoUpdateRequest request) {
-		if (request.nickname() != null) {
-			targetMember.updateNickname(request.nickname());
+	private void doUpdateMemberInfo(Member targetMember, MemberInfoUpdateRequest request,
+		MultipartFile file) {
+		if (request.getNickname() != null) {
+			targetMember.updateNickname(request.getNickname());
 		}
 
-		if (request.email() != null) {
-			targetMember.updateEmail(request.email());
+		if (request.getEmail() != null) {
+			targetMember.updateEmail(request.getEmail());
 		}
 
-		if (request.profileImg() != null) {
-			String profileImage = imageFileService.saveProfileImage(request.profileImg());
+		if (file != null) {
+			String profileImage = imageFileService.saveProfileImage(file);
 			targetMember.updateProfileImage(profileImage);
 		}
 	}
@@ -93,16 +97,16 @@ public class MemberService {
 
 		String currentPassword = targetMember.getPassword();
 
-		if (!passwordEncoder.matches(request.currentPassword(),
+		if (!passwordEncoder.matches(request.getCurrentPassword(),
 			currentPassword)) {
 			throw new MemberException(MemberErrorCode.WRONG_PASSWORD);
 		}
 
-		if (passwordEncoder.matches(request.newPassword(), currentPassword)) {
+		if (passwordEncoder.matches(request.getNewPassword(), currentPassword)) {
 			throw new MemberException(MemberErrorCode.SAME_AS_OLD_PASSWORD);
 		}
 
-		targetMember.updatePassword(request.newPassword(), passwordEncoder);
+		targetMember.updatePassword(request.getNewPassword(), passwordEncoder);
 	}
 
 
