@@ -38,6 +38,7 @@ public class ImageFileService {
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
 
+	//뭔가 이미지 종류(ex. 게시글 사진?)이 늘어난다면 ImageType을 부활시키고 리펙토링이 가능할 듯
 	@Transactional
 	public ImageFile saveChatImage(MultipartFile file) {
 		String uploadFileName = file.getOriginalFilename();
@@ -75,6 +76,7 @@ public class ImageFileService {
 		}
 	}
 
+	//뭔가 이미지 종류(ex. 게시글 사진?)이 늘어난다면 ImageType을 부활시키고 리펙토링이 가능할 듯
 	@Transactional
 	public String saveProfileImage(MultipartFile file) {
 		String originalFilename = file.getOriginalFilename();
