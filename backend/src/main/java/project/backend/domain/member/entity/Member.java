@@ -57,9 +57,8 @@ public class Member {
 	@OneToMany(mappedBy = "participant")
 	private List<ChatParticipant> participants = new ArrayList<>();
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "profile_image_id")
-	private ImageFile profileImage;
+	@Column(nullable = false)
+	private String profileImage;
 
 	@Setter
 	private Long recentRoomId;
@@ -77,7 +76,7 @@ public class Member {
 		this.password = encoder.encode(password);
 	}
 
-	public void updateProfileImage(ImageFile profileImage) {
+	public void updateProfileImage(String profileImage) {
 		this.profileImage = profileImage;
 	}
 }

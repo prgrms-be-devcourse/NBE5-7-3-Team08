@@ -9,9 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
-import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.PasswordChangeRequest;
 import project.backend.domain.member.dto.event.ProfileUpdateEvent;
@@ -39,7 +37,7 @@ public class MemberService {
 	private final ApplicationEventPublisher eventPublisher;
 
 	@Value("${file.images.profile.default}")
-	private String defaultProfile;
+	private String defaultProfileImg;
 
 	public MemberResponse saveMember(SignUpRequest request) {
 
@@ -50,9 +48,6 @@ public class MemberService {
 		if (request.getEmail() != null && checkEmailAlreadyExists(request.getEmail())) {
 			throw new MemberException(MemberErrorCode.EMAIL_ALREADY_EXISTS);
 		}
-
-		ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
-			defaultProfile);
 
 		String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -83,9 +78,8 @@ public class MemberService {
 		}
 
 		if (request.profileImg() != null) {
-			ImageFile newProfile = imageFileService.saveImageFile(request.profileImg(),
-				ImageType.PROFILE_IMAGE);
-			targetMember.updateProfileImage(newProfile);
+			String profileImage = imageFileService.saveProfileImage(request.profileImg());
+			targetMember.updateProfileImage(profileImage);
 		}
 	}
 

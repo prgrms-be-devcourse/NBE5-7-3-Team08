@@ -29,7 +29,7 @@ public class MemberDetails implements UserDetails {
 		this.password = member.getPassword();
 		this.nickname = member.getNickname();
 		this.provider = member.getProvider();
-		this.profileImg = member.getProfileImage().getStoreFileName();
+		this.profileImg = member.getProfileImage();
 	}
 
 	@Override
