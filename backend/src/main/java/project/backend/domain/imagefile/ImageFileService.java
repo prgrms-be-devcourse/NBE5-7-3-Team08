@@ -1,6 +1,10 @@
 package project.backend.domain.imagefile;
 
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import project.backend.global.exception.ex.ImageFileException;
 import project.backend.global.exception.errorcode.ImageFileErrorCode;
+import software.amazon.awssdk.core.exception.SdkClientException;
 
 @Slf4j
 @Service
@@ -22,12 +27,16 @@ import project.backend.global.exception.errorcode.ImageFileErrorCode;
 public class ImageFileService {
 
 	private final ImageFileRepository imageFileRepository;
+	private final AmazonS3 amazonS3;
 
 	@Value("${file.images.profile.path}")
 	private String profilePath;
 
 	@Value("${file.images.chat.path}")
 	private String chatImagePath;
+
+	@Value("${cloud.aws.s3.bucket}")
+	private String bucket;
 
 	@Transactional
 	public ImageFile saveChatImage(MultipartFile file) {
@@ -41,19 +50,27 @@ public class ImageFileService {
 		checkFileExtensionIsImage(extension);
 
 		String storeFileName = UUID.randomUUID() + extension;
+		String s3Key = chatImagePath + storeFileName;
 
 		ImageFile imageFile = ImageFile.of(storeFileName, uploadFileName);
 		imageFileRepository.saveAndFlush(imageFile);
-		Path savePath = Paths.get(chatImagePath, storeFileName);
 
 		try {
-			log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
-			file.transferTo(savePath);
+			log.info("[S3] 채팅 이미지 업로드 : {}", s3Key);
+			// 메타데이터 설정
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentType(file.getContentType());
+			metadata.setContentLength(file.getSize());
+
+			// 업로드 실행
+			amazonS3.putObject(
+				new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata));
+
 			return imageFile;
 
-		} catch (IOException e) {
+		} catch (IOException | SdkClientException | AmazonServiceException e) {
 			imageFileRepository.delete(imageFile);
-			log.error("파일 저장 중 IOException 발생", e);
+			log.error("파일 업로드 실패", e);
 			throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
 		}
 	}
@@ -71,14 +88,21 @@ public class ImageFileService {
 
 		String storeFileName = UUID.randomUUID() + extension;
 
-		Path savePath = Paths.get(profilePath, storeFileName);
+		String s3Key = profilePath + storeFileName;
 
 		try {
-			log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
-			file.transferTo(savePath);
+			log.info("[S3] 프로필 이미지 업로드 : {}", s3Key);
+			// 메타데이터 설정
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentType(file.getContentType());
+			metadata.setContentLength(file.getSize());
 
-		} catch (IOException e) {
-			log.error("파일 저장 중 IOException 발생", e);
+			// 업로드 실행
+			amazonS3.putObject(
+				new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata));
+
+		} catch (IOException | SdkClientException | AmazonServiceException e) {
+			log.error("파일 업로드 실패", e);
 			throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
 		}
 

@@ -133,7 +133,7 @@ export default function EditProfilePage() {
                     <div className={styles.avatarSection}>
                       <div className={styles.avatarContainer}>
                         <img
-                          src={selectedImage || `http://localhost:8080/images/profile/${userDetails.profileImg}`}
+                          src={selectedImage || `${process.env.REACT_APP_PROFILE_IMAGE_URL}/${userDetails.profileImg}`}
                           alt="Profile"
                           className={styles.avatarImage}
                           onError={(e) => {

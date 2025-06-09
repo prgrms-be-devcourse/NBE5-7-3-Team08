@@ -29,7 +29,7 @@ const useWebSocket = ({
         }
 
         const client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(`${process.env.REACT_APP_API_URL}/ws`),
             reconnectDelay: 1000,
             heartbeatIncoming: 15000,
             heartbeatOutgoing: 10000,

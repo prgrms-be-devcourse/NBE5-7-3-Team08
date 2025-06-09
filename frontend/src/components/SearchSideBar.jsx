@@ -127,7 +127,7 @@ const SearchSidebar = ({
               
               <div style={{ display: 'flex' }}>
                 <img
-                  src={`http://localhost:8080/images/profile/${msg.profileImageUrl}`}
+                  src={`${process.env.REACT_APP_PROFILE_IMAGE_URL}/${msg.profileImageUrl}`}
                   alt="profile"
                   style={{
                     width: '40px',

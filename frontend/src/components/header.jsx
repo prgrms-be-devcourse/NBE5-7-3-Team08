@@ -69,7 +69,7 @@ export function Header() {
           ) : (
           <Link to="/myprofile">
             <img 
-              src={`http://localhost:8080/images/profile/${profileImage}`}
+              src={`${process.env.REACT_APP_PROFILE_IMAGE_URL}/${profileImage}`}
               alt="User profile"
               className="profile-image"
               onError={(e) => {

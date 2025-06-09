@@ -70,7 +70,7 @@ const MessageItem = ({ msg, currentUser, contextMenuId, setContextMenuId, setEdi
       style={{ marginBottom: '18px', display: 'flex', alignItems: 'flex-start' }}>
       {/* 프로필 이미지 */}
       <img
-        src={`http://localhost:8080/images/profile/${msg.profileImageUrl}`}
+        src={`${process.env.REACT_APP_PROFILE_IMAGE_URL}/${msg.profileImageUrl}`}
         alt="프로필"
         width={38}
         height={38}
@@ -349,7 +349,7 @@ const MessageContent = ({msg, editMessageId, editContent, setEditContent, handle
         boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
       }}>
         <img
-          src={`http://localhost:8080/images/chat/${msg.chatImageUrl}`}
+          src={`${process.env.REACT_APP_CHAT_IMAGE_URL}/${msg.chatImageUrl}`}
           alt="업로드된 이미지"
           style={{
             width: '100%',
