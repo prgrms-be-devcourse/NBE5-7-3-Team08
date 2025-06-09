@@ -127,9 +127,6 @@ const useWebSocket = ({
             
             onStompError: (frame) => {
                 console.error("💥 STOMP error:", frame.headers['message']);
-                if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
-                    navigate("/login");
-                }
             }
         });
 
