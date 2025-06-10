@@ -3,6 +3,8 @@ package project.backend.domain.chat.chatmessage.dao;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
@@ -17,4 +19,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 	// 커서기반 무한스크롤 메서드
 	List<ChatMessage> findByChatRoom_IdAndIdLessThanOrderByIdDesc(Long roomId, Long cursor,
 		Pageable pageable);
+
+	@Modifying
+	@Query("DELETE FROM ChatMessage cm WHERE cm.chatRoom.id = :roomId")
+	void deleteByChatRoomId(Long roomId);
+
 }
