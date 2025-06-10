@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import project.backend.global.json.EmptyToNullDeserializer;
+import project.backend.global.util.EmptyToNullDeserializer;
 
 
 @Data

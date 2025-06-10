@@ -1,14 +1,11 @@
 package project.backend.domain.member.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 import lombok.Getter;
-import org.springframework.web.multipart.MultipartFile;
-import project.backend.global.json.EmptyToNullDeserializer;
+import project.backend.global.util.EmptyToNullDeserializer;
 
 @Getter
 public class MemberInfoUpdateRequest {

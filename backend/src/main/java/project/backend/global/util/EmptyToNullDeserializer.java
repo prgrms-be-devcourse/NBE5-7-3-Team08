@@ -1,4 +1,4 @@
-package project.backend.global.json;
+package project.backend.global.util;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
