@@ -54,7 +54,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
 	long countByParticipantIdAndIsActiveTrue(Long participantId);
 
 	// 가장 최근에 생성된(ID가 큰 = 나중에 생성 되었음)
-	Optional<ChatParticipant> findTopByParticipantIdAndIsActiveTrueOrderByIdDesc(
+	Optional<ChatParticipant> findTopByParticipantIdAndIsActiveTrueOrderByJoinAtDesc(
 		Long participantId);
 
 	@Modifying

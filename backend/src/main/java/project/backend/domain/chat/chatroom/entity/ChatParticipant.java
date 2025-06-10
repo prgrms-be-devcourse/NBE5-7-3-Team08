@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,18 +38,23 @@ public class ChatParticipant {
 
 	private boolean isActive = true;
 
+	private LocalDateTime joinAt;
+
 	@Builder
-	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom, boolean isOwner) {
+	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom, boolean isOwner,
+		LocalDateTime joinAt) {
 		this.id = id;
 		this.participant = participant;
 		this.chatRoom = chatRoom;
 		this.isOwner = isOwner;
+		this.joinAt = joinAt;
 	}
 
 	public static ChatParticipant of(Member participant, ChatRoom chatRoom) {
 		return ChatParticipant.builder()
 			.participant(participant)
 			.chatRoom(chatRoom)
+			.joinAt(LocalDateTime.now())
 			.build();
 	}
 
@@ -57,6 +63,7 @@ public class ChatParticipant {
 			.participant(participant)
 			.chatRoom(chatRoom)
 			.isOwner(true)
+			.joinAt(LocalDateTime.now())
 			.build();
 	}
 

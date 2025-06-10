@@ -200,7 +200,7 @@ public class ChatRoomService {
 		Member member = memberService.getMemberById(memberId);
 
 		Optional<ChatParticipant> mostRecentActiveRoom =
-			chatParticipantRepository.findTopByParticipantIdAndIsActiveTrueOrderByIdDesc(memberId);
+			chatParticipantRepository.findTopByParticipantIdAndIsActiveTrueOrderByJoinAtDesc(memberId);
 
 		if (mostRecentActiveRoom.isPresent()) {
 			member.setRecentRoomId(mostRecentActiveRoom.get().getChatRoom().getId());
