@@ -122,7 +122,13 @@ const useWebSocket = ({
 
             onWebSocketClose: async () => {
                 console.warn('🛑 WebSocket 끊김 → 토큰 갱신 시도');
-                await safeRefreshToken(); // 중복 요청 방지됨
+                try{
+                    await safeRefreshToken(); // 중복 요청 방지됨
+                } catch(err){
+                    console.error('❌ 토큰 갱신 실패 → 로그인 페이지로 이동');
+                    navigate('/login');
+                }
+                
             },
             
             onStompError: (frame) => {

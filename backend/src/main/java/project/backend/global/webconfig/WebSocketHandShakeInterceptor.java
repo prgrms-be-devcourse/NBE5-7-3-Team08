@@ -3,6 +3,7 @@ package project.backend.global.webconfig;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -13,8 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import project.backend.auth.app.CookieUtils;
 import project.backend.auth.token.jwt.JwtProvider;
-import project.backend.auth.token.jwt.TokenStatus;
 
 @Slf4j
 @Component
@@ -29,28 +30,18 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
 
 		if (request instanceof ServletServerHttpRequest servletRequest) {
 			HttpServletRequest httpServletRequest = servletRequest.getServletRequest();
-			Cookie[] cookies = httpServletRequest.getCookies();
+			Optional<Cookie> accessTokenCookie = CookieUtils.getCookie(httpServletRequest,
+				"accessToken");
 
-			if (cookies != null) {
-				for (Cookie cookie : cookies) {
-					if ("accessToken".equals(cookie.getName())) {
-						String token = cookie.getValue();
+			if (accessTokenCookie.isPresent()) {
+				String token = accessTokenCookie.get().getValue();
+				Authentication authentication = jwtProvider.getAuthentication(token);
 
-						if (jwtProvider.validateAccessToken(token) == TokenStatus.VALID) {
-							Authentication authentication = jwtProvider.getAuthentication(token);
-
-							// ✅ SecurityContext에 인증 객체 저장
-							SecurityContextHolder.getContext().setAuthentication(authentication);
-
-							// 🔁 이후 ChannelInterceptor에서 꺼내쓰기 위해 attributes에도 저장
-							attributes.put("auth", authentication);
-						}
-						break;
-					}
-				}
+				// 이후 ChannelInterceptor에서 꺼내쓰기 위해 attributes에도 저장
+				attributes.put("auth", authentication);
 			} else {
 				log.error("웹소켓 핸드쉐이크 요청 시 쿠키에 accessToken이 포함되지 않음");
-				return false;
+				return false; //handshake 허용x
 			}
 		}
 		return true; // handshake 허용
