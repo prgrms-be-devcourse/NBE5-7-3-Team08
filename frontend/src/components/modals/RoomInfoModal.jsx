@@ -53,7 +53,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
         }}>
           {participant.profileImageUrl && !imageError ? (
             <img
-              src={`http://localhost:8080/images/profile/${participant.profileImageUrl}`}
+              src={`${process.env.REACT_APP_PROFILE_IMAGE_URL}/${participant.profileImageUrl}`}
               alt={participant.nickname}
               style={{
                 width: '100%',

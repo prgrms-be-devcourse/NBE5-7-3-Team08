@@ -17,11 +17,5 @@ public class WebConfig implements WebMvcConfigurer {
 			.allowCredentials(true);
 	}
 
-	@Override
-	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-		registry
-			.addResourceHandler("images/**") // 클라이언트 요청 URL
-			.addResourceLocations("file:./images/");   // 실제 서버 폴더 경로
-	}
 }
 
