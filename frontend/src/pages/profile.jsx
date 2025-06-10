@@ -74,7 +74,7 @@ const ProfilePage = () => {
                   <div className={styles["profile-image-in-page"]}>
                     <img
                       className={styles["profile-image"]}
-                      src={`http://localhost:8080/images/profile/${userDetails.profileImg}`}
+                      src={`${process.env.REACT_APP_PROFILE_IMAGE_URL}/${userDetails.profileImg}`}
                       alt="Profile"
                       onError={(e) => {
                         e.target.onerror = null;
