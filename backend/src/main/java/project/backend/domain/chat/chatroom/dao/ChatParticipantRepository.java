@@ -28,7 +28,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
 	Optional<ChatParticipant> findTopByParticipantIdAndIsActiveTrueOrderByJoinAtDesc(
 		Long participantId);
 
-	Optional<ChatParticipant> findByChatRoomIdAndIsOwnerTrueAndIsActiveTrue(Long roomId);
+	Optional<ChatParticipant> findByChatRoomIdAndIsOwnerTrue(Long roomId);
 
 	boolean existsByParticipantIdAndChatRoomIdAndIsActiveTrue(Long participantId, Long chatRoomId);
 }

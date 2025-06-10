@@ -231,7 +231,7 @@ public class ChatRoomService {
 	}
 
 	private Long findOwnerId(Long roomId) {
-		ChatParticipant owner = chatParticipantRepository.findByChatRoomIdAndIsOwnerTrueAndIsActiveTrue(roomId)
+		ChatParticipant owner = chatParticipantRepository.findByChatRoomIdAndIsOwnerTrue(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.OWNER_NOT_FOUND));
 		return owner.getParticipant().getId();
 	}
