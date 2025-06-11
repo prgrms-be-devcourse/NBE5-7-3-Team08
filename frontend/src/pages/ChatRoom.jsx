@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../components/SideBar';
-import Header from '../components/header';
 import SearchSidebar from '../components/SearchSideBar';
 import axiosInstance from '../components/api/axiosInstance';
 import MessageInput from '../components/chatroom/MessageInput';
@@ -652,17 +650,14 @@ const ChatRoom = () => {
     <div
       style={{
         backgroundColor: '#f5f7fa',
-        height: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
       }}>
 
-      <Header />
-
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <Sidebar />
 
         <div style={{
           flex: 1,

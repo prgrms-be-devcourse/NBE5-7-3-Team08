@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/SideBar';
-import Header from '../components/header';
 import styles from "../profile-page.module.css";
 import axiosInstance from '../components/api/axiosInstance';
 
@@ -62,9 +60,7 @@ const ProfilePage = () => {
 
   return (
     <div className={styles["app-container"]}>
-      <Header />
       <div className={styles["content-wrapper"]}>
-        <Sidebar />
         <div className={styles["main-content"]}>
           <h1 className={styles["page-title"]}>My Profile</h1>
           <div className={styles["profile-container"]}>
