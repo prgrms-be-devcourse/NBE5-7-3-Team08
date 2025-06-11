@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { User, Shield, Edit2 } from "lucide-react"
-import Sidebar from '../components/SideBar';
-import Header from '../components/header';
 import PasswordChangeModal from "../components/modals/PasswordChangeModal"
 import axiosInstance from "../components/api/axiosInstance"
 import styles from "../edit-profile-page.module.css"
@@ -93,11 +91,9 @@ export default function EditProfilePage() {
 
   return (
     <div className={styles.appContainer}>
-      <Header />
       {/* Main Content */}
       
       <div className={styles.mainContent}>
-      <Sidebar />
 
         {/* Profile Content */}
         <main className={styles.profileMain}>

@@ -1,5 +1,3 @@
-import SideBar from '../components/SideBar';
-import Header from '../components/header';
 import sleepingCat from '../sleeping_cat.gif';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -73,11 +71,8 @@ const BlankRoom = () => {
 
   return (
     <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
-      <Header></Header>
-
       {/* 본문 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden' }}>
-        <SideBar />
       
         <div style={{
           flex: 1,

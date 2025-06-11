@@ -1,32 +1,33 @@
 import React from 'react';
-import ChatRoom from './pages/ChatRoom';
-import Home from './pages/Home'
-import BlankRoom from './pages/BlankRoom'
-import Login from "./pages/login-form"
-import Signup from "./pages/signup"
-import MyPage from "./pages/profile"
-import EditProfilePage from "./pages/editprofile"
-import ErrorPage from './pages/ErrorPage';
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+import ChatRoom from './pages/ChatRoom';
+import Home from './pages/Home';
+import BlankRoom from './pages/BlankRoom';
+import Login from './pages/login-form';
+import Signup from './pages/signup';
+import MyPage from './pages/profile';
+import EditProfilePage from './pages/editprofile';
+import ErrorPage from './pages/ErrorPage';
 
-
+import Layout from './Layout';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />}/>
-        <Route path="/chat/:inviteCode" element={<ChatRoom />} />
-        <Route path="/blank" element={<BlankRoom />} />
+        {/* 공통 레이아웃이 적용될 라우트들 */}
+        <Route element={<Layout />}>
+          <Route path="/chat/:inviteCode" element={<ChatRoom />} />
+          <Route path="/blank" element={<BlankRoom />} />
+          <Route path="/myprofile" element={<MyPage />} />
+          <Route path="/myprofile/edit" element={<EditProfilePage />} />
+          <Route path="/" element={<Home />} />
+        </Route>
+        {/* 레이아웃 없는 라우트 (예: 로그인, 회원가입, 에러 페이지) */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/myprofile" element={<MyPage />} />
-        <Route path="/myprofile/edit" element={<EditProfilePage />} />
         <Route path="/error" element={<ErrorPage />} />
- 
-
       </Routes>
     </BrowserRouter>
   );
