@@ -51,6 +51,8 @@ public class ChatRoomEventListener {
 			eventMessageResponse);
 	}
 
+	@Async
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleProfileUpdate(ProfileUpdateEvent updateEvent) {
 		log.debug("🔥 프로필 업데이트 이벤트 수신: userId={}, nickname={}",
 			updateEvent.userId(), updateEvent.nickname());
