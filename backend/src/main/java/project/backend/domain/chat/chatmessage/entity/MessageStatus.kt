@@ -1,5 +1,5 @@
-package project.backend.domain.chat.chatmessage.entity;
+package project.backend.domain.chat.chatmessage.entity
 
-public enum MessageStatus {
-	NO_CHANGE, EDITED, DELETED,
+enum class MessageStatus {
+    NO_CHANGE, EDITED, DELETED,
 }

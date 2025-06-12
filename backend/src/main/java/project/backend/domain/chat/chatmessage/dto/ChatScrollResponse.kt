@@ -1,13 +1,8 @@
-package project.backend.domain.chat.chatmessage.dto;
+package project.backend.domain.chat.chatmessage.dto
 
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import ChatMessageResponse
 
-@Getter
-@AllArgsConstructor
-public class ChatScrollResponse {
-
-	private List<ChatMessageResponse> messages;
-	private Long nextCursor;
-}
+data class ChatScrollResponse(
+    val messages: List<ChatMessageResponse>,
+    val nextCursor: Long?
+)

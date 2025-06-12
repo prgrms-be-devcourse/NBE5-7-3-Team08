@@ -1,103 +1,84 @@
-package project.backend.domain.chat.chatmessage.api;
+package project.backend.domain.chat.chatmessage.api
 
-import java.security.Principal;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-import project.backend.domain.chat.chatmessage.app.ChatMessageService;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageEditRequest;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchRequest;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
-import project.backend.domain.chat.chatmessage.dto.ChatScrollResponse;
-import project.backend.domain.chat.chatroom.app.ChatRoomService;
-import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
-import project.backend.domain.imagefile.ImageFile;
-import project.backend.domain.imagefile.ImageFileService;
-import project.backend.auth.dto.MemberDetails;
+import ChatMessageResponse
+import org.springframework.data.domain.Page
+import org.springframework.messaging.handler.annotation.DestinationVariable
+import org.springframework.messaging.handler.annotation.MessageMapping
+import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.messaging.simp.SimpMessagingTemplate
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
+import project.backend.auth.dto.MemberDetails
+import project.backend.domain.chat.chatmessage.app.ChatMessageService
+import project.backend.domain.chat.chatmessage.dto.*
+import project.backend.domain.imagefile.ImageFileService
+import java.security.Principal
 
 @RestController
-@RequiredArgsConstructor
-public class ChatMessageController {
+class ChatMessageController(
+    private val chatMessageService: ChatMessageService,
+    private val imageFileService: ImageFileService,
+    private val messagingTemplate: SimpMessagingTemplate
+) {
 
-	private final ChatRoomService chatRoomService;
-	private final ChatMessageService chatMessageService;
-	private final ImageFileService imageFileService;
-	private final SimpMessagingTemplate messagingTemplate;
-	private final ChatParticipantRepository chatParticipantRepository;
+    @MessageMapping("/send-message/{roomId}")
+    fun sendMessage(
+        @DestinationVariable roomId: Long,
+        @Payload request: ChatMessageRequest,
+        principal: Principal
+    ): ChatMessageResponse {
+        val response = chatMessageService.save(roomId, request, principal.name)
+        messagingTemplate.convertAndSend("/topic/chat/$roomId", response)
+        return response
+    }
 
-	@MessageMapping("/send-message/{roomId}") //클라이언트가 메세지를 보낼 경로
-	public ChatMessageResponse sendMessage(@DestinationVariable Long roomId,
-		@Payload ChatMessageRequest request, Principal principal) {
-		ChatMessageResponse response = chatMessageService.save(roomId, request,
-			principal.getName());
+    @MessageMapping("/edit-message/{roomId}")
+    fun editMessage(
+        @DestinationVariable roomId: Long,
+        @Payload request: ChatMessageEditRequest,
+        principal: Principal
+    ): ChatMessageResponse {
+        val response = chatMessageService.editMessage(roomId, request, principal.name)
+        messagingTemplate.convertAndSend("/topic/chat/$roomId", response)
+        return response
+    }
 
-		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+    @GetMapping("/chat/search/{roomId}")
+    fun searchMessages(
+        @AuthenticationPrincipal memberDetails: MemberDetails,
+        @PathVariable("roomId") roomId: Long,
+        @RequestParam("keyword") keyword: String,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int
+    ): Page<ChatMessageSearchResponse> {
+        val request = ChatMessageSearchRequest.of(keyword, page, size)
+        return chatMessageService.searchMessages(memberDetails.getId(), roomId, request)
+    }
 
-		return response;
-	}
+    @GetMapping("/{roomId}/messages")
+    fun getMessages(
+        @AuthenticationPrincipal memberDetails: MemberDetails,
+        @PathVariable roomId: Long,
+        @RequestParam(required = false) cursor: Long?,
+        @RequestParam(defaultValue = "30") size: Int
+    ): ChatScrollResponse {
+        return chatMessageService.getMessagesByRoomId(memberDetails.getId(), roomId, cursor, size)
+    }
 
-	@MessageMapping("/edit-message/{roomId}")
-	public ChatMessageResponse editMessage(@DestinationVariable Long roomId, @Payload
-	ChatMessageEditRequest request, Principal principal) {
-		ChatMessageResponse response = chatMessageService.editMessage(roomId, request,
-			principal.getName());
+    @MessageMapping("/delete-message/{roomId}")
+    fun deleteMessage(
+        @DestinationVariable roomId: Long,
+        @Payload messageId: Long,
+        principal: Principal
+    ): ChatMessageResponse {
+        val response = chatMessageService.deleteMessage(roomId, messageId, principal.name)
+        messagingTemplate.convertAndSend("/topic/chat/$roomId", response)
+        return response
+    }
 
-		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
-
-		return response;
-	}
-
-	@GetMapping("/chat/search/{roomId}")
-	public Page<ChatMessageSearchResponse> searchMessages(
-		@AuthenticationPrincipal MemberDetails memberDetails,
-		@PathVariable("roomId") Long roomId,
-		@RequestParam("keyword") String keyword,
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size
-	) {
-		ChatMessageSearchRequest request = ChatMessageSearchRequest.of(keyword, page, size);
-
-		return chatMessageService.searchMessages(memberDetails.getId(), roomId, request);
-	}
-
-	@GetMapping("/{roomId}/messages")
-	public ChatScrollResponse getMessages(
-		@AuthenticationPrincipal MemberDetails memberDetails,
-		@PathVariable Long roomId,
-		@RequestParam(required = false) Long cursor,
-		@RequestParam(defaultValue = "30") int size
-	) {
-		return chatMessageService.getMessagesByRoomId(memberDetails.getId(), roomId, cursor, size);
-	}
-
-	@MessageMapping("/delete-message/{roomId}")
-	public ChatMessageResponse deleteMessage(@DestinationVariable Long roomId,
-		@Payload Long messageId,
-		Principal principal) {
-		ChatMessageResponse response = chatMessageService.deleteMessage(roomId, messageId,
-			principal.getName());
-
-		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
-
-		return response;
-	}
-
-	@PostMapping("/send-image")
-	public Long uploadImage(@RequestParam MultipartFile image) {
-		ImageFile imageFile = imageFileService.saveChatImage(image);
-		return imageFile.getImageId();
-	}
-
+    @PostMapping("/send-image")
+    fun uploadImage(@RequestParam image: MultipartFile): Long {
+        val imageFile = imageFileService.saveChatImage(image)
+        return imageFile.imageId
 }

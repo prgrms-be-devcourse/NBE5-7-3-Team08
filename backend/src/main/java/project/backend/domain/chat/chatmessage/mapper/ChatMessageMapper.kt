@@ -1,144 +1,154 @@
-package project.backend.domain.chat.chatmessage.mapper;
+package project.backend.domain.chat.chatmessage.mapper
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
-import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
-import project.backend.domain.chat.chatmessage.entity.ChatMessage;
-import project.backend.domain.chat.chatmessage.entity.ChatMessageSearch;
-import project.backend.domain.chat.chatmessage.entity.MessageType;
-import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
-import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.domain.chat.github.dto.GitMessageDto;
-import project.backend.domain.imagefile.ImageFile;
-import project.backend.domain.member.entity.Member;
+import ChatMessageResponse
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
+import project.backend.domain.chat.chatmessage.dto.*
+import project.backend.domain.chat.chatmessage.entity.*
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent
+import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent
+import project.backend.domain.chat.chatroom.entity.ChatRoom
+import project.backend.domain.chat.github.dto.GitMessageDto
+import project.backend.domain.imagefile.ImageFile
+import project.backend.domain.member.entity.Member
+import java.time.LocalDateTime
 
 @Component
-public class ChatMessageMapper {
+class ChatMessageMapper {
 
-	public ChatMessage toEntityWithText(ChatRoom room, Member sender,
-		ChatMessageRequest request) {
-		return ChatMessage.builder()
-			.chatRoom(room)
-			.sender(sender)
-			.content(request.getContent())
-			.type(MessageType.TEXT)
-			.sendAt(LocalDateTime.now())
-			.build();
-	}
+    @Value("\${file.images.profile.github}")
+    private lateinit var githubProfile: String
 
-	public ChatMessage toEntityWithCode(ChatRoom room, Member sender,
-		ChatMessageRequest request) {
-		return ChatMessage.builder()
-			.chatRoom(room)
-			.sender(sender)
-			.content(request.getContent())
-			.type(MessageType.CODE)
-			.sendAt(LocalDateTime.now())
-			.codeLanguage(request.getLanguage())
-			.build();
-	}
+    fun toEntityWithText(
+        room: ChatRoom,
+        sender: Member,
+        request: ChatMessageRequest
+    ): ChatMessage {
+        return ChatMessage(
+            chatRoom = room,
+            sender = sender,
+            content = request.content,
+            type = MessageType.TEXT,
+            sendAt = LocalDateTime.now()
+        )
+    }
 
-	public ChatMessage toEntityWithImage(ChatRoom room, Member sender,
-		ImageFile chatImage) {
-		return ChatMessage.builder()
-			.chatRoom(room)
-			.sender(sender)
-			.type(MessageType.IMAGE)
-			.sendAt(LocalDateTime.now())
-			.chatImage(chatImage)
-			.build();
-	}
+    fun toEntityWithCode(
+        room: ChatRoom,
+        sender: Member,
+        request: ChatMessageRequest
+    ): ChatMessage {
+        return ChatMessage(
+            chatRoom = room,
+            sender = sender,
+            content = request.content,
+            type = MessageType.CODE,
+            sendAt = LocalDateTime.now(),
+            codeLanguage = request.language
+        )
+    }
 
-	public ChatMessage toEntityWithGit(GitMessageDto gitMessage, Member githubBot) {
-		return ChatMessage.builder()
-			.chatRoom(gitMessage.getRoom())
-			.type(MessageType.GIT)
-			.content(gitMessage.getContent())
-			.sendAt(LocalDateTime.now())
-			.sender(githubBot)
-			.build();
-	}
+    fun toEntityWithImage(
+        room: ChatRoom,
+        sender: Member,
+        chatImage: ImageFile
+    ): ChatMessage {
+        return ChatMessage(
+            chatRoom = room,
+            sender = sender,
+            type = MessageType.IMAGE,
+            sendAt = LocalDateTime.now(),
+            chatImage = chatImage
+        )
+    }
 
-	public ChatMessage toEntityWithJoinEvent(ChatRoom room, Member sender,
-		JoinChatRoomEvent joinEvent) {
-		return ChatMessage.builder()
-			.chatRoom(room)
-			.sender(sender)
-			.content(joinEvent.nickname() + "님이 입장했습니다.")
-			.type(MessageType.EVENT)
-			.sendAt(joinEvent.joinAt())
-			.build();
-	}
+    fun toEntityWithGit(gitMessage: GitMessageDto, githubBot: Member): ChatMessage {
+        return ChatMessage(
+            chatRoom = gitMessage.room,
+            type = MessageType.GIT,
+            content = gitMessage.content,
+            sendAt = LocalDateTime.now(),
+            sender = githubBot
+        )
+    }
 
-	public ChatMessage toEntityWithLeaveEvent(ChatRoom room, Member sender,
-		LeaveChatRoomEvent leaveEvent) {
-		return ChatMessage.builder()
-			.chatRoom(room)
-			.sender(sender)
-			.content(leaveEvent.nickname() + "님이 나갔습니다.")
-			.type(MessageType.EVENT)
-			.sendAt(leaveEvent.leaveAt())
-			.build();
-	}
+    fun toEntityWithJoinEvent(
+        room: ChatRoom,
+        sender: Member,
+        joinEvent: JoinChatRoomEvent
+    ): ChatMessage {
+        return ChatMessage(
+            chatRoom = room,
+            sender = sender,
+            content = "${joinEvent.nickname}님이 입장했습니다.",
+            type = MessageType.EVENT,
+            sendAt = joinEvent.joinAt
+        )
+    }
 
-	// 저장된 메시지에서 ID, roomId, content만 꺼내서 저장하므로 ChatMessage 사용
-	public ChatMessageSearch toSearchEntity(ChatMessage message) {
-		return ChatMessageSearch.builder()
-			.id(message.getId())
-			.roomId(message.getChatRoom().getId())
-			.content(message.getContent())
-			.build();
-	}
+    fun toEntityWithLeaveEvent(
+        room: ChatRoom,
+        sender: Member,
+        leaveEvent: LeaveChatRoomEvent
+    ): ChatMessage {
+        return ChatMessage(
+            chatRoom = room,
+            sender = sender,
+            content = "${leaveEvent.nickname}님이 나갔습니다.",
+            type = MessageType.EVENT,
+            sendAt = leaveEvent.leaveAt
+        )
+    }
 
-	public ChatMessageResponse toResponse(ChatMessage message) {
-		String senderName = message.getSender().getNickname();
+    // 저장된 메시지에서 ID, roomId, content만 꺼내서 저장하므로 ChatMessage 사용
+    fun toSearchEntity(message: ChatMessage): ChatMessageSearch {
+        return ChatMessageSearch(
+            id = message.id,
+            roomId = message.chatRoom.id,
+            content = message.content ?: ""
+        )
+    }
 
-		return ChatMessageResponse.builder()
-			.senderName(senderName)
-			.content(message.getContent())
-			.type(message.getType())
-			.sendAt(message.getSendAt())
-			.language(message.getCodeLanguage())
-			.profileImageUrl(message.getSender().getProfileImage())
-			.chatImageUrl(
-				Optional.ofNullable(message.getChatImage())
-					.map(ImageFile::getStoreFileName)
-					.orElse(null)
-			)
-			.senderId(message.getSender().getId())
-			.messageId(message.getId())
-			.status(message.getStatus())
-			.build();
-	}
+    fun toResponse(message: ChatMessage): ChatMessageResponse {
+        val senderName = message.sender.nickname
 
-	public ChatMessageSearchResponse toSearchResponse(ChatMessage message) {
-		return ChatMessageSearchResponse.builder()
-			.messageId(message.getId())
-			.content(message.getContent())
-			.senderName(message.getSender().getNickname())
-			.profileImageUrl(message.getSender().getProfileImage())
-			.sendAt(message.getSendAt())
-			.type(message.getType())
-			.build();
-	}
+        return ChatMessageResponse(
+            senderName = senderName,
+            content = message.content,
+            type = message.type,
+            sendAt = message.sendAt,
+            language = message.codeLanguage,
+            profileImageUrl = message.sender.profileImage,
+            chatImageUrl = message.chatImage?.storeFileName,
+            senderId = message.sender.id,
+            messageId = message.id,
+            status = message.status
+        )
+    }
 
-	@Value("${file.images.profile.github}")
-	private String githubProfile;
+    fun toSearchResponse(message: ChatMessage): ChatMessageSearchResponse {
+        return ChatMessageSearchResponse(
+            messageId = message.id,
+            content = message.content,
+            senderName = message.sender.nickname,
+            profileImageUrl = message.sender.profileImage,
+            sendAt = message.sendAt,
+            type = message.type
+        )
+    }
 
-	public ChatMessageResponse toGitResponse(ChatMessage message) {
-		return ChatMessageResponse.builder()
-			.senderName("깃허브봇")
-			.content(message.getContent())
-			.type(message.getType())
-			.sendAt(message.getSendAt())
-			.messageId(message.getId())
-			.profileImageUrl(githubProfile)
-			.build();
-	}
-
+    fun toGitResponse(message: ChatMessage): ChatMessageResponse {
+        return ChatMessageResponse(
+            senderName = "깃허브봇",
+            content = message.content,
+            type = message.type,
+            sendAt = message.sendAt,
+            messageId = message.id,
+            profileImageUrl = githubProfile,
+            language = null,
+            chatImageUrl = null,
+            senderId = message.sender.id,
+            status = message.status
+        )
+    }
 }

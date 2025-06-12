@@ -53,4 +53,8 @@ public class MemberDetails implements UserDetails {
 			.build();
 	}
 
+	public Long getId() {
+		return this.id;
+	}
+
 }

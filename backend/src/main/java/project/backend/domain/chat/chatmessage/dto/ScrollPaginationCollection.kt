@@ -1,35 +1,32 @@
-package project.backend.domain.chat.chatmessage.dto;
+package project.backend.domain.chat.chatmessage.dto
 
-import java.util.List;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
+class ScrollPaginationCollection<T> private constructor(
+    private val itemsWithNextCursor: List<T>,
+    private val size: Int
+) {
+    companion object {
+        fun <T> of(itemsWithNextCursor: List<T>, size: Int): ScrollPaginationCollection<T> {
+            return ScrollPaginationCollection(itemsWithNextCursor, size)
+        }
+    }
 
-//커서기반 무한스크롤
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class ScrollPaginationCollection<T> {
+    fun getCurrentScrollItems(): List<T> {
+        return if (isLastScroll()) {
+            itemsWithNextCursor
+        } else {
+            itemsWithNextCursor.subList(0, size)
+        }
+    }
 
-	private final List<T> itemsWithNextCursor;
-	private final int size;
+    fun getNextCursor(): T? {
+        return if (isLastScroll()) {
+            null
+        } else {
+            itemsWithNextCursor[size - 1]
+        }
+    }
 
-	public static <T> ScrollPaginationCollection<T> of(List<T> itemsWithNextCursor, int size) {
-		return new ScrollPaginationCollection<>(itemsWithNextCursor, size);
-	}
-
-	public List<T> getCurrentScrollItems() {
-		if (isLastScroll()) {
-			return itemsWithNextCursor;
-		}
-		return itemsWithNextCursor.subList(0, size);
-	}
-
-	public T getNextCursor() {
-		if (isLastScroll()) {
-			return null;
-		}
-		return itemsWithNextCursor.get(size - 1);
-	}
-
-	public boolean isLastScroll() {
-		return itemsWithNextCursor.size() < size;
-	}
+    fun isLastScroll(): Boolean {
+        return itemsWithNextCursor.size <= size
+    }
 }

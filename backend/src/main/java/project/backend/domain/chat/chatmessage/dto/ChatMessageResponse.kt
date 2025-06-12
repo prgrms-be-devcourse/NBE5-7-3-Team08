@@ -1,24 +1,16 @@
-package project.backend.domain.chat.chatmessage.dto;
+import project.backend.domain.chat.chatmessage.entity.MessageStatus
+import project.backend.domain.chat.chatmessage.entity.MessageType
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-import lombok.Builder;
-import lombok.Getter;
-import project.backend.domain.chat.chatmessage.entity.MessageStatus;
-import project.backend.domain.chat.chatmessage.entity.MessageType;
-
-@Getter
-@Builder
-public class ChatMessageResponse {
-
-	private String content;
-	private String senderName;
-	private LocalDateTime sendAt;
-	private MessageType type;
-	private String language;
-	private String profileImageUrl;
-	private String chatImageUrl;
-	private Long senderId;
-	private Long messageId;
-	private MessageStatus status;
-
-}
+data class ChatMessageResponse(
+    val content: String? = null,
+    val senderName: String,
+    val sendAt: LocalDateTime,
+    val type: MessageType,
+    val language: String? = null,
+    val profileImageUrl: String? = null,
+    val chatImageUrl: String? = null,
+    val senderId: Long,
+    val messageId: Long,
+    val status: MessageStatus
+)

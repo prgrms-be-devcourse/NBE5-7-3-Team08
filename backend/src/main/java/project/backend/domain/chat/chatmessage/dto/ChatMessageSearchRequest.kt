@@ -1,24 +1,17 @@
-package project.backend.domain.chat.chatmessage.dto;
+package project.backend.domain.chat.chatmessage.dto
 
-import lombok.Builder;
-import lombok.Getter;
-
-@Getter
-@Builder
-public class ChatMessageSearchRequest {
-
-	private String keyword;
-
-	private int page = 0;
-
-	private int pageSize = 10;
-
-	public static ChatMessageSearchRequest of(String keyword, int page, int pageSize) {
-		return ChatMessageSearchRequest.builder()
-			.keyword(keyword)
-			.page(page)
-			.pageSize(pageSize)
-			.build();
-	}
+data class ChatMessageSearchRequest(
+    val keyword: String,
+    val page: Int = 0,
+    val pageSize: Int = 10
+) {
+    companion object {
+        fun of(keyword: String, page: Int, pageSize: Int): ChatMessageSearchRequest {
+            return ChatMessageSearchRequest(
+                keyword = keyword,
+                page = page,
+                pageSize = pageSize
+            )
+        }
+    }
 }
-

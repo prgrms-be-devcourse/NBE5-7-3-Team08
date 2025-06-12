@@ -1,29 +1,14 @@
-package project.backend.domain.chat.chatmessage.dto.event;
+package project.backend.domain.chat.chatmessage.dto.event
 
-import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import project.backend.domain.chat.chatmessage.entity.MessageType;
+import project.backend.domain.chat.chatmessage.entity.MessageType
+import java.time.LocalDateTime
 
-@Getter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class EventMessageResponse {
-
-	private Long messageId;
-
-	private MessageType type;
-
-	private String sender;
-
-	private Long roomId;
-
-	private String content;
-
-	private LocalDateTime sendAt;
-
-}
+data class EventMessageResponse(
+    val messageId: Long? = null,
+    val type: MessageType? = null,
+    val sender: String? = null,
+    val roomId: Long? = null,
+    val content: String? = null,
+    val sendAt: LocalDateTime? = null
+)
 

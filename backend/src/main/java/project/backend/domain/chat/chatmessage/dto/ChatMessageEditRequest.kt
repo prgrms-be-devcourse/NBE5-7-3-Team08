@@ -1,13 +1,10 @@
-package project.backend.domain.chat.chatmessage.dto;
+package project.backend.domain.chat.chatmessage.dto
 
+import project.backend.domain.chat.chatmessage.entity.MessageType
 
-import project.backend.domain.chat.chatmessage.entity.MessageType;
-
-public record ChatMessageEditRequest(
-    Long messageId,
-    String content,
-    MessageType type,
-    String language //코드 메세지인 경우
-) {
-
-}
+data class ChatMessageEditRequest(
+	val messageId: Long,
+	val content: String,
+	val type: MessageType,
+	val language: String
+)

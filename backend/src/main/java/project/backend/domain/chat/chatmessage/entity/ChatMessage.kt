@@ -1,81 +1,67 @@
-package project.backend.domain.chat.chatmessage.entity;
+package project.backend.domain.chat.chatmessage.entity
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import java.time.LocalDateTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.domain.imagefile.ImageFile;
-import project.backend.domain.member.entity.Member;
+import jakarta.persistence.*
+import project.backend.domain.chat.chatroom.entity.ChatRoom
+import project.backend.domain.imagefile.ImageFile
+import project.backend.domain.member.entity.Member
+import java.time.LocalDateTime
 
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-public class ChatMessage {
+@Table(name = "chat_message")
+class ChatMessage(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "message_id")
+    val id: Long = 0,
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "message_id")
-	private Long id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    val sender: Member,
 
-	@ManyToOne
-	@JoinColumn(name = "member_id")
-	private Member sender;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    val chatRoom: ChatRoom,
 
-	@ManyToOne
-	@JoinColumn(name = "room_id")
-	private ChatRoom chatRoom;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    var content: String? = null,
 
-	@Lob
-	@Column(columnDefinition = "TEXT")
-	private String content;
+    val sendAt: LocalDateTime,
 
-	private LocalDateTime sendAt;
+    @Enumerated(EnumType.STRING)
+    val type: MessageType,
 
-	@Enumerated(EnumType.STRING)
-	private MessageType type;
+    var codeLanguage: String? = null,
 
-	private String codeLanguage; //추가, 문법마다 다르게 하이라이팅을 하기 위함
+    @OneToOne(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "chat_image_id")
+    val chatImage: ImageFile? = null,
 
-	@OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-	@JoinColumn(name = "chat_image_id")
-	private ImageFile chatImage;
+    @Enumerated(EnumType.STRING)
+    var status: MessageStatus = MessageStatus.NO_CHANGE
+) {
+    protected constructor() : this(
+        sender = Member(),
+        chatRoom = ChatRoom(),
+        sendAt = LocalDateTime.now(),
+        type = MessageType.TEXT
+    )
 
-	@Builder.Default
-	@Enumerated(EnumType.STRING)
-	private MessageStatus status = MessageStatus.NO_CHANGE;
+    fun updateContent(newContent: String?) {
+        newContent?.let {
+            content = it
+            status = MessageStatus.EDITED
+        }
+    }
 
-	public void updateContent(String newContent) {
-		if (newContent != null) {
-			content = newContent;
-			status = MessageStatus.EDITED;
-		}
-	}
+    fun updateLanguage(language: String?) {
+        language?.let {
+            codeLanguage = it
+            status = MessageStatus.EDITED
+        }
+    }
 
-	public void updateLanguage(String language) {
-		if (language != null) {
-			codeLanguage = language;
-			status = MessageStatus.EDITED;
-		}
-	}
-
-	public void delete() {
-		status = MessageStatus.DELETED;
-	}
+    fun delete() {
+        status = MessageStatus.DELETED
+    }
 }
