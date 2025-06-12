@@ -1,27 +1,22 @@
-package project.backend.auth.token.entity;
+package project.backend.auth.token.entity
 
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.springframework.data.redis.core.RedisHash;
-import org.springframework.data.redis.core.index.Indexed;
+import org.springframework.data.annotation.Id
+import org.springframework.data.redis.core.RedisHash
+import org.springframework.data.redis.core.index.Indexed
 
-@Getter
-@AllArgsConstructor
 @RedisHash(value = "token", timeToLive = 604800)
-public class TokenRedis {
+data class TokenRedis(
+    @Id
+    val id: Long,
 
-	@Id
-	private Long id;
+    @Indexed
+    var accessToken: String,
 
-	@Indexed
-	private String accessToken;
+    val refreshToken: String,
 
-	private String refreshToken;
-
-	private String githubAccess;
-
-	public void updateAccessToken(String accessToken) {
-		this.accessToken = accessToken;
-	}
+    val githubAccess: String
+) {
+    fun updateAccessToken(accessToken: String) {
+        this.accessToken = accessToken
+    }
 }

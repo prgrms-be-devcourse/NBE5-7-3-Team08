@@ -1,55 +1,47 @@
-package project.backend.auth.app;
+package project.backend.auth.app
 
-import java.util.Collections;
+import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User
+import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import project.backend.auth.dto.CustomOAuth2User
+import project.backend.auth.dto.OAuth2Attribute
+import project.backend.domain.chat.github.GitHubClient
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import project.backend.domain.chat.github.GitHubClient;
-import project.backend.auth.dto.CustomOAuth2User;
-import project.backend.auth.dto.OAuth2Attribute;
-
-@Slf4j
 @Service
 @Transactional
-@RequiredArgsConstructor
-public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+class CustomOAuth2UserService(
+    private val gitHubClient: GitHubClient
+) : OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-	private final GitHubClient gitHubClient;
+    private val log = KotlinLogging.logger {}
 
-	@Override
-	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-		OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService = new DefaultOAuth2UserService();
+    @Throws(OAuth2AuthenticationException::class)
+    override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User {
+        val delegate = DefaultOAuth2UserService()
+        val oAuth2User = delegate.loadUser(userRequest)
+        val accessToken = userRequest.accessToken.tokenValue
+        val registrationId = userRequest.clientRegistration.registrationId
 
-		OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
-		String accessToken = userRequest.getAccessToken().getTokenValue();
+        val userNameAttributeName = userRequest.clientRegistration.providerDetails.userInfoEndpoint.userNameAttributeName
 
-		String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        log.info { "userNameAttributeName = $userNameAttributeName" }
 
-		//login임 식별자 역할
-		String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
-			.getUserInfoEndpoint().getUserNameAttributeName();
+        val customOAuth2User = CustomOAuth2User(oAuth2User, accessToken)
 
-		log.info("userNameAttributeName = {}", userNameAttributeName);
+        val oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName, customOAuth2User.attributes)
+        val memberAttribute = oAuth2Attribute.convertToMap()
 
-		CustomOAuth2User customOAuth2User = new CustomOAuth2User(oAuth2User, accessToken);
-
-		OAuth2Attribute oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName,
-			customOAuth2User.getAttributes());
-
-		var memberAttribute = oAuth2Attribute.convertToMap();
-
-		return new DefaultOAuth2User(
-			Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-			memberAttribute, userNameAttributeName);
-	}
+        return DefaultOAuth2User(
+            setOf(SimpleGrantedAuthority("ROLE_USER")),
+            memberAttribute,
+            userNameAttributeName
+        )
+    }
 }
-

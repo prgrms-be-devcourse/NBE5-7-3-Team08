@@ -1,27 +1,24 @@
-package project.backend.domain.member.dto;
+package project.backend.domain.member.dto
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.Getter;
+import jakarta.validation.constraints.AssertTrue
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
-@Getter
-public class PasswordChangeRequest {
+data class PasswordChangeRequest(
 
-	@NotBlank(message = "현재 비밀번호를 입력해주세요.")
-	String currentPassword;
+    @field:NotBlank(message = "현재 비밀번호를 입력해주세요.")
+    val currentPassword: String,
 
-	@NotBlank(message = "새로운 비밀번호를 입력해주세요.")
-	@Size(min = 4, message = "비밀번호는 최소 4자 이상이여야 합니다.")
-	String newPassword;
+    @field:NotBlank(message = "새로운 비밀번호를 입력해주세요.")
+    @field:Size(min = 4, message = "비밀번호는 최소 4자 이상이여야 합니다.")
+    val newPassword: String,
 
-	@NotBlank(message = "새로운 비밀번호 확인을 입력해주세요.")
-	@Size(min = 4, message = "비밀번호는 최소 4자 이상이여야 합니다.")
-	String confirmPassword;
+    @field:NotBlank(message = "새로운 비밀번호 확인을 입력해주세요.")
+    @field:Size(min = 4, message = "비밀번호는 최소 4자 이상이여야 합니다.")
+    val confirmPassword: String
 
-	@AssertTrue(message = "비밀번호와 확인값이 일치하지 않습니다.")
-	boolean isPasswordMatch() {
-		return newPassword.equals(confirmPassword);
-	}
-
+) {
+    @get:AssertTrue(message = "비밀번호와 확인값이 일치하지 않습니다.")
+    val isPasswordMatch: Boolean
+        get() = newPassword == confirmPassword
 }

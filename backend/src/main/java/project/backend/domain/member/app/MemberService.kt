@@ -1,149 +1,151 @@
-package project.backend.domain.member.app;
+package project.backend.domain.member.app
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import project.backend.domain.imagefile.ImageFileService;
-import project.backend.domain.member.dao.MemberRepository;
-import project.backend.domain.member.dto.PasswordChangeRequest;
-import project.backend.domain.member.dto.event.ProfileUpdateEvent;
-import project.backend.auth.dto.MemberDetails;
-import project.backend.domain.member.dto.MemberResponse;
-import project.backend.domain.member.dto.MemberInfoUpdateRequest;
-import project.backend.domain.member.dto.SignUpRequest;
-import project.backend.domain.member.entity.Member;
-import project.backend.domain.member.entity.ProviderType;
-import project.backend.domain.member.mapper.MemberMapper;
-import project.backend.global.exception.errorcode.AuthErrorCode;
-import project.backend.global.exception.errorcode.MemberErrorCode;
-import project.backend.global.exception.ex.AuthException;
-import project.backend.global.exception.ex.MemberException;
+import lombok.extern.slf4j.Slf4j
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import project.backend.auth.dto.MemberDetails
+import project.backend.domain.imagefile.ImageFileService
+import project.backend.domain.member.dao.MemberRepository
+import project.backend.domain.member.dto.MemberInfoUpdateRequest
+import project.backend.domain.member.dto.MemberResponse
+import project.backend.domain.member.dto.PasswordChangeRequest
+import project.backend.domain.member.dto.SignUpRequest
+import project.backend.domain.member.dto.event.ProfileUpdateEvent.Companion.of
+import project.backend.domain.member.entity.Member
+import project.backend.domain.member.entity.ProviderType
+import project.backend.domain.member.mapper.MemberMapper.toEntity
+import project.backend.domain.member.mapper.MemberMapper.toResponse
+import project.backend.global.exception.errorcode.AuthErrorCode
+import project.backend.global.exception.errorcode.MemberErrorCode
+import project.backend.global.exception.ex.AuthException
+import project.backend.global.exception.ex.MemberException
+import java.util.*
 
 @Slf4j
 @Service
 @Transactional
-@RequiredArgsConstructor
-public class MemberService {
+class MemberService (
+    private val memberRepository: MemberRepository,
+    private val imageFileService: ImageFileService,
+    private val passwordEncoder: PasswordEncoder,
+    private val eventPublisher: ApplicationEventPublisher,
 
-	private final MemberRepository memberRepository;
-	private final ImageFileService imageFileService;
-	private final PasswordEncoder passwordEncoder;
-	private final ApplicationEventPublisher eventPublisher;
+){
+    @Value("\${file.images.profile.default}")
+    private lateinit var defaultProfileImg: String
 
-	@Value("${file.images.profile.default}")
-	private String defaultProfileImg;
+    fun saveMember(request: SignUpRequest): MemberResponse {
+        if (checkUsernameAlreadyExists(request.username)) {
+            throw MemberException(MemberErrorCode.USERNAME_ALREADY_EXISTS)
+        }
 
-	public MemberResponse saveMember(SignUpRequest request) {
+        if (request.email != null && checkEmailAlreadyExists(request.email)) {
+            throw MemberException(MemberErrorCode.EMAIL_ALREADY_EXISTS)
+        }
 
-		if (checkUsernameAlreadyExists(request.getUsername())) {
-			throw new MemberException(MemberErrorCode.USERNAME_ALREADY_EXISTS);
-		}
+        val encryptedPassword = passwordEncoder!!.encode(request.password)
 
-		if (request.getEmail() != null && checkEmailAlreadyExists(request.getEmail())) {
-			throw new MemberException(MemberErrorCode.EMAIL_ALREADY_EXISTS);
-		}
+        val newMember = memberRepository!!.save(
+            toEntity(request, encryptedPassword, defaultProfileImg!!)
+        )
 
-		String encryptedPassword = passwordEncoder.encode(request.getPassword());
+        return toResponse(newMember)
+    }
 
-		Member newMember = memberRepository.save(
-			MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
+    fun updateMemberInfo(
+        auth: Authentication, request: MemberInfoUpdateRequest,
+        file: MultipartFile?
+    ): MemberResponse {
+        val memberDetails = auth.principal as MemberDetails
+        val targetMember = getMemberById(memberDetails.id)
 
-		return MemberMapper.toResponse(newMember);
-	}
+        doUpdateMemberInfo(targetMember, request, file)
 
-	public MemberResponse updateMemberInfo(Authentication auth, MemberInfoUpdateRequest request,
-		MultipartFile file) {
+        eventPublisher!!.publishEvent(of(targetMember))
 
-		MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
-		Member targetMember = getMemberById(memberDetails.getId());
+        return toResponse(targetMember)
+    }
 
-		doUpdateMemberInfo(targetMember, request, file);
+    private fun doUpdateMemberInfo(
+        targetMember: Member, request: MemberInfoUpdateRequest,
+        file: MultipartFile?
+    ) {
+        if (request.nickname != null) {
+            targetMember.updateNickname(request.nickname)
+        }
 
-		eventPublisher.publishEvent(ProfileUpdateEvent.of(targetMember));
+        if (request.email != null) {
+            targetMember.updateEmail(request.email)
+        }
 
-		return MemberMapper.toResponse(targetMember);
-	}
+        if (file != null) {
+            val profileImage = imageFileService!!.saveProfileImage(file)
+            targetMember.updateProfileImage(profileImage)
+        }
+    }
 
-	private void doUpdateMemberInfo(Member targetMember, MemberInfoUpdateRequest request,
-		MultipartFile file) {
-		if (request.getNickname() != null) {
-			targetMember.updateNickname(request.getNickname());
-		}
+    fun updatePassword(auth: Authentication, request: PasswordChangeRequest) {
+        val memberDetails = auth.principal as MemberDetails
+        val targetMember = getMemberById(memberDetails.id)
 
-		if (request.getEmail() != null) {
-			targetMember.updateEmail(request.getEmail());
-		}
+        if (targetMember.provider != ProviderType.LOCAL) {
+            throw AuthException(AuthErrorCode.WRONG_AUTH_TYPE_LOGIN)
+        }
 
-		if (file != null) {
-			String profileImage = imageFileService.saveProfileImage(file);
-			targetMember.updateProfileImage(profileImage);
-		}
-	}
+        val currentPassword = targetMember.password
 
-	public void updatePassword(Authentication auth, PasswordChangeRequest request) {
-		MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
-		Member targetMember = getMemberById(memberDetails.getId());
+        if (!passwordEncoder!!.matches(
+                request.currentPassword,
+                currentPassword
+            )
+        ) {
+            throw MemberException(MemberErrorCode.WRONG_PASSWORD)
+        }
 
-		if (targetMember.getProvider() != ProviderType.LOCAL) {
-			throw new AuthException(AuthErrorCode.WRONG_AUTH_TYPE_LOGIN);
-		}
+        if (passwordEncoder.matches(request.newPassword, currentPassword)) {
+            throw MemberException(MemberErrorCode.SAME_AS_OLD_PASSWORD)
+        }
 
-		String currentPassword = targetMember.getPassword();
-
-		if (!passwordEncoder.matches(request.getCurrentPassword(),
-			currentPassword)) {
-			throw new MemberException(MemberErrorCode.WRONG_PASSWORD);
-		}
-
-		if (passwordEncoder.matches(request.getNewPassword(), currentPassword)) {
-			throw new MemberException(MemberErrorCode.SAME_AS_OLD_PASSWORD);
-		}
-
-		targetMember.updatePassword(request.getNewPassword(), passwordEncoder);
-	}
+        targetMember.updatePassword(request.newPassword, passwordEncoder)
+    }
 
 
-	// Spring Security에서 UsernameNotFoundException을 처리하도록 유도하는 메서드
-	public Member getMemberForLogin(String username) {
-		try {
-			return getMemberByUsername(username);
-		} catch (MemberException e) {
-			log.info("존재하지 않는 username으로 로그인 시도: {}", username);
-			throw new UsernameNotFoundException("존재하지 않는 유저입니다: " + username, e);
-		}
-	}
+    // Spring Security에서 UsernameNotFoundException을 처리하도록 유도하는 메서드
+    fun getMemberForLogin(username: String): Member {
+        try {
+            return getMemberByUsername(username)
+        } catch (e: MemberException) {
+//            MemberService.log.info("존재하지 않는 username으로 로그인 시도: {}", username)
+            throw UsernameNotFoundException("존재하지 않는 유저입니다: $username", e)
+        }
+    }
 
-	public Member getMemberByUsername(String username) {
-		return memberRepository.findByUsername(username)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-	}
+    fun getMemberByUsername(username: String): Member {
+        return memberRepository.findByUsername(username)
+            ?: throw MemberException(MemberErrorCode.MEMBER_NOT_FOUND)
+    }
 
-	public Member getMemberById(Long id) {
-		return memberRepository.findById(id)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-	}
+    fun getMemberById(id: Long): Member =
+        memberRepository.findById(id)
+            .orElseThrow { MemberException(MemberErrorCode.MEMBER_NOT_FOUND) }
 
-	public MemberResponse getMemberDetails(Authentication auth) {
-		MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
-		Long memberId = loginMember.getId();
-		log.info("memberId = {}", memberId);
-		Member member = getMemberById(memberId);
-		return MemberMapper.toResponse(member);
-	}
+    fun getMemberDetails(auth: Authentication): MemberResponse {
+        val loginMember = auth.principal as MemberDetails
+        val memberId = loginMember.id
+//        MemberService.log.info("memberId = {}", memberId)
+        val member = getMemberById(memberId)
+        return toResponse(member)
+    }
 
-	private boolean checkUsernameAlreadyExists(String username) {
-		return memberRepository.findByUsername(username).isPresent();
-	}
+    private fun checkUsernameAlreadyExists(username: String): Boolean =
+        memberRepository.findByUsername(username) != null
 
-	private boolean checkEmailAlreadyExists(String email) {
-		return memberRepository.findByEmail(email).isPresent();
-	}
-
+    private fun checkEmailAlreadyExists(email: String): Boolean =
+        memberRepository.findByEmail(email) != null
 }

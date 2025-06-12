@@ -1,17 +1,12 @@
-package project.backend.domain.member.dto;
+package project.backend.domain.member.dto
 
-import lombok.Builder;
-import lombok.Data;
-import project.backend.domain.member.entity.ProviderType;
+import project.backend.domain.member.entity.ProviderType
 
-@Data
-@Builder
-public class MemberResponse {
-
-	private Long id;
-	private String username;
-	private String email;
-	private String nickname;
-	private ProviderType provider;
-	private String profileImg;
-}
+data class MemberResponse (
+    val id: Long,
+    val username: String,
+    val email: String?,
+    val nickname: String,
+    val provider: ProviderType,
+    val profileImg: String
+)

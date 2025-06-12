@@ -1,23 +1,12 @@
-package project.backend.domain.member.dao;
+package project.backend.domain.member.dao
 
+import org.springframework.data.jpa.repository.JpaRepository
+import project.backend.domain.member.entity.Member
+import java.util.*
 
-import jakarta.annotation.Nonnull;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Repository;
-import project.backend.domain.member.entity.Member;
+interface MemberRepository : JpaRepository<Member, Long> {
 
-@Repository
-public interface MemberRepository extends JpaRepository<Member, Long> {
+    fun findByEmail(email: String): Member?
 
-	@EntityGraph(attributePaths = {"profileImage"})
-	Optional<Member> findByEmail(String email);
-
-	@EntityGraph(attributePaths = {"profileImage"})
-	Optional<Member> findById(@Nonnull Long id);
-
-	@EntityGraph(attributePaths = {"profileImage"})
-	Optional<Member> findByUsername(String username);
+    fun findByUsername(username: String): Member?
 }

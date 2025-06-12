@@ -1,42 +1,39 @@
-package project.backend.domain.member.api;
+package project.backend.domain.member.api
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import project.backend.domain.member.app.MemberService;
-import project.backend.domain.member.dto.MemberResponse;
-import project.backend.domain.member.dto.MemberInfoUpdateRequest;
-import project.backend.domain.member.dto.PasswordChangeRequest;
+import jakarta.validation.Valid
+import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
+import project.backend.domain.member.app.MemberService
+import project.backend.domain.member.dto.MemberInfoUpdateRequest
+import project.backend.domain.member.dto.MemberResponse
+import project.backend.domain.member.dto.PasswordChangeRequest
 
-@Slf4j
 @RestController
 @RequestMapping("/user")
-@RequiredArgsConstructor
-public class MemberController {
+class MemberController(
+    private val memberService: MemberService
+) {
 
-	private final MemberService memberService;
+    @GetMapping("/details")
+    fun getMemberDetails(authentication: Authentication): MemberResponse {
+        return memberService.getMemberDetails(authentication)
+    }
 
-	@GetMapping("/details")
-	public MemberResponse getMemberDetails(Authentication authentication) {
-		return memberService.getMemberDetails(authentication);
-	}
+    @PutMapping("/info", consumes = ["multipart/form-data"])
+    fun updateMemberInfo(
+        authentication: Authentication,
+        @RequestPart("request") @Valid request: MemberInfoUpdateRequest,
+        @RequestPart("profileImg", required = false) profileImg: MultipartFile?
+    ): MemberResponse {
+        return memberService.updateMemberInfo(authentication, request, profileImg)
+    }
 
-	@PutMapping(value = "/info", consumes = "multipart/form-data")
-	public MemberResponse updateMemberInfo(
-		Authentication authentication,
-		@RequestPart("request") @Valid MemberInfoUpdateRequest request,
-		@RequestPart(value = "profileImg", required = false) MultipartFile profileImg
-	) {
-		return memberService.updateMemberInfo(authentication, request, profileImg);
-	}
-
-	@PutMapping("/password")
-	public void updatePassword(Authentication authentication,
-		@RequestBody @Valid PasswordChangeRequest request) {
-		memberService.updatePassword(authentication, request);
-	}
-
+    @PutMapping("/password")
+    fun updatePassword(
+        authentication: Authentication,
+        @RequestBody @Valid request: PasswordChangeRequest
+    ) {
+        memberService.updatePassword(authentication, request)
+    }
 }

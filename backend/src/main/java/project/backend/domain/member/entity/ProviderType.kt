@@ -1,9 +1,9 @@
-package project.backend.domain.member.entity;
+package project.backend.domain.member.entity
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat
 
 @JsonFormat(shape = JsonFormat.Shape.STRING)
-public enum ProviderType {
-	LOCAL,
-	GITHUB
+enum class ProviderType {
+    LOCAL,
+    GITHUB
 }

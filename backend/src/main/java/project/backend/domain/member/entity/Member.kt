@@ -1,82 +1,57 @@
-package project.backend.domain.member.entity;
+package project.backend.domain.member.entity
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import project.backend.domain.chat.chatroom.entity.ChatParticipant;
-import project.backend.domain.imagefile.ImageFile;
+import jakarta.persistence.*
+import org.springframework.security.crypto.password.PasswordEncoder
+import project.backend.domain.chat.chatroom.entity.ChatParticipant
+import java.time.LocalDateTime
 
 @Entity
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Member {
+class Member (
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_id")
+    val id: Long? = null,
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "member_id")
-	private Long id;
+    @Column(nullable = false, unique = true)
+    var username: String,
 
-	@Column(nullable = false, unique = true)
-	private String username;
+    @Column(nullable = false)
+    var nickname: String,
 
-	@Column(nullable = false)
-	private String nickname;
+    @Column(unique = true)
+    var email: String? = null,
 
-	@Column(unique = true)
-	private String email;
+    var password: String? = null,
 
-	private String password;
+    @Column(updatable = false)
+    @Enumerated(EnumType.STRING)
+    var provider: ProviderType,
 
-	@Column(updatable = false)
-	@Enumerated(EnumType.STRING)
-	private ProviderType provider;
+    val joinAt: LocalDateTime = LocalDateTime.now(),
 
-	@Builder.Default
-	private LocalDateTime joinAt = LocalDateTime.now();
+    @OneToMany(mappedBy = "participant")
+    val participants: List<ChatParticipant> = emptyList(),
 
-	@Builder.Default
-	@OneToMany(mappedBy = "participant")
-	private List<ChatParticipant> participants = new ArrayList<>();
+    @Column(nullable = false)
+    var profileImage: String,
 
-	@Column(nullable = false)
-	private String profileImage;
+    var recentRoomId: Long? = null
+) {
 
-	@Setter
-	private Long recentRoomId;
+    fun updateNickname(nickname: String) {
+        this.nickname = nickname
+    }
 
-	public void updateNickname(String nickname) {
-		this.nickname = nickname;
+    fun updateEmail(email: String?) {
+        this.email = email
+    }
 
-	}
+    fun updatePassword(password: String, encoder: PasswordEncoder) {
+        this.password = encoder.encode(password)
+    }
 
-	public void updateEmail(String email) {
-		this.email = email;
-	}
+    fun updateProfileImage(profileImage: String) {
+        this.profileImage = profileImage
+    }
 
-	public void updatePassword(String password, PasswordEncoder encoder) {
-		this.password = encoder.encode(password);
-	}
-
-	public void updateProfileImage(String profileImage) {
-		this.profileImage = profileImage;
-	}
 }

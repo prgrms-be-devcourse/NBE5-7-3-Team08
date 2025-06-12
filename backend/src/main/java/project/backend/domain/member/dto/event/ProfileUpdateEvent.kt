@@ -1,21 +1,19 @@
-package project.backend.domain.member.dto.event;
+package project.backend.domain.member.dto.event
 
-import java.util.Optional;
-import project.backend.domain.imagefile.ImageFile;
-import project.backend.domain.member.entity.Member;
+import project.backend.domain.member.entity.Member
 
-public record ProfileUpdateEvent(
-	Long userId,
-	String nickname,
-	String profileImageUrl
+data class ProfileUpdateEvent(
+    val userId: Long,
+    val nickname: String,
+    val profileImageUrl: String
 ) {
-
-	public static ProfileUpdateEvent of(Member member) {
-		return new ProfileUpdateEvent(
-			member.getId(),
-			member.getNickname(),
-			member.getProfileImage()
-		);
-	}
-
+    companion object {
+        fun of(member: Member): ProfileUpdateEvent {
+            return ProfileUpdateEvent(
+                member.id!!,
+                member.nickname,
+                member.profileImage
+            )
+        }
+    }
 }

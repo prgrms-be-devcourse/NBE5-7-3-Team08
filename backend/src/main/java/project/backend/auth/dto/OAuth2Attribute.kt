@@ -1,50 +1,47 @@
-package project.backend.auth.dto;
+package project.backend.auth.dto
 
-import java.util.HashMap;
-import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import project.backend.global.exception.errorcode.AuthErrorCode;
-import project.backend.global.exception.ex.AuthException;
+import org.slf4j.LoggerFactory
+import project.backend.global.exception.errorcode.AuthErrorCode
+import project.backend.global.exception.ex.AuthException
 
-@Slf4j
-public record OAuth2Attribute(
-	Map<String, Object> attributes,
-	//login
-	String attributeKey,
-	String name,
-	String email,
-	String githubAccess
-
+data class OAuth2Attribute(
+    val attributes: Map<String, Any>,
+    val attributeKey: String,  // login
+    val name: String?,
+    val email: String?,
+    val githubAccess: String?
 ) {
 
-	public static OAuth2Attribute of(String provider, String attributeKey,
-		Map<String, Object> attributes) {
-		return switch (provider) {
-			case "github" -> ofGithub(attributeKey, attributes);
-			default -> {
-				log.error("provider = {}", provider);
-				throw new AuthException(AuthErrorCode.UNSUPPORTED_PROVIDER);
-			}
-		};
-	}
+    companion object {
+        private val log = LoggerFactory.getLogger(OAuth2Attribute::class.java)
 
-	private static OAuth2Attribute ofGithub(String attributeKey, Map<String, Object> attributes) {
-		return new OAuth2Attribute(
-			attributes,
-			(String) attributes.get("login"),
-			(String) attributes.get("name"),
-			(String) attributes.get("email"),
-			(String) attributes.get("githubAccess")
-		);
-	}
+        fun of(provider: String, attributeKey: String, attributes: Map<String, Any>): OAuth2Attribute {
+            return when (provider) {
+                "github" -> ofGithub(attributeKey, attributes)
+                else -> {
+                    log.error("provider = {}", provider)
+                    throw AuthException(AuthErrorCode.UNSUPPORTED_PROVIDER)
+                }
+            }
+        }
 
+        private fun ofGithub(attributeKey: String, attributes: Map<String, Any>): OAuth2Attribute {
+            return OAuth2Attribute(
+                attributes,
+                attributes["login"] as? String ?: attributeKey,
+                attributes["name"] as? String,
+                attributes["email"] as? String,
+                attributes["githubAccess"] as? String
+            )
+        }
+    }
 
-	public Map<String, Object> convertToMap() {
-		Map<String, Object> map = new HashMap<>();
-		map.put("login", attributeKey);
-		map.put("name", name);
-		map.put("email", email);
-		map.put("githubAccess", githubAccess);
-		return map;
-	}
+    fun convertToMap(): Map<String, Any?> {
+        return mapOf(
+            "login" to attributeKey,
+            "name" to name,
+            "email" to email,
+            "githubAccess" to githubAccess
+        )
+    }
 }

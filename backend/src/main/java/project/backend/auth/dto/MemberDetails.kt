@@ -1,56 +1,47 @@
-package project.backend.auth.dto;
+package project.backend.auth.dto
 
-import lombok.Getter;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import project.backend.domain.member.dto.MemberResponse;
-import project.backend.domain.member.entity.Member;
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
+import project.backend.domain.member.dto.MemberResponse
+import project.backend.domain.member.entity.Member
+import project.backend.domain.member.entity.ProviderType
 
-import java.util.Collection;
-import java.util.List;
-import project.backend.domain.member.entity.ProviderType;
+class MemberDetails(member: Member) : UserDetails {
 
-@Getter
-public class MemberDetails implements UserDetails {
+    val id: Long = member.id!!
+    val username: String = member.username
+    val email: String? = member.email
+    private val passwordValue: String? = member.password
+    val nickname: String = member.nickname
+    val provider: ProviderType = member.provider
+    val profileImg: String = member.profileImage
 
-	private final Long id;
-	private final String username;
-	private final String email;
-	private final String password;
-	private final String nickname;
-	private final ProviderType provider;
-	private final String profileImg;
+    override fun getAuthorities(): Collection<GrantedAuthority> =
+        listOf(SimpleGrantedAuthority("ROLE_USER"))
 
-	public MemberDetails(Member member) {
-		this.id = member.getId();
-		this.username = member.getUsername();
-		this.email = member.getEmail();
-		this.password = member.getPassword();
-		this.nickname = member.getNickname();
-		this.provider = member.getProvider();
-		this.profileImg = member.getProfileImage();
-	}
+    override fun getPassword(): String? = passwordValue
 
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-	}
+    override fun getUsername(): String = username
 
-	@Override
-	public String getUsername() {
-		return this.username;
-	}
+    override fun isAccountNonExpired(): Boolean = true
 
-	public static MemberResponse toResponse(MemberDetails memberDetails) {
-		return MemberResponse.builder()
-			.id(memberDetails.getId())
-			.username(memberDetails.getUsername())
-			.email(memberDetails.getEmail())
-			.nickname(memberDetails.getNickname())
-			.provider(memberDetails.getProvider())
-			.profileImg(memberDetails.getProfileImg())
-			.build();
-	}
+    override fun isAccountNonLocked(): Boolean = true
 
+    override fun isCredentialsNonExpired(): Boolean = true
+
+    override fun isEnabled(): Boolean = true
+
+    companion object {
+        fun toResponse(memberDetails: MemberDetails): MemberResponse {
+            return MemberResponse(
+                id = memberDetails.id,
+                username = memberDetails.username,
+                email = memberDetails.email,
+                nickname = memberDetails.nickname,
+                provider = memberDetails.provider,
+                profileImg = memberDetails.profileImg
+            )
+        }
+    }
 }

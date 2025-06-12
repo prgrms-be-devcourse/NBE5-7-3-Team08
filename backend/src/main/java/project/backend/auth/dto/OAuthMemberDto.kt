@@ -1,9 +1,7 @@
-package project.backend.auth.dto;
+package project.backend.auth.dto
 
-public record OAuthMemberDto(
-	String email,
-	String nickname,
-	String login
-) {
-
-}
+data class OAuthMemberDto(
+	val email: String,
+	val nickname: String,
+	val login: String
+)
