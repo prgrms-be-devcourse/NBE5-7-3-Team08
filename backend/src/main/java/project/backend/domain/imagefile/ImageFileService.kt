@@ -53,11 +53,11 @@ class ImageFileService(
             amazonS3.putObject(PutObjectRequest(bucket, s3Key, file.inputStream, metadata))
             println("[S3] 이미지 업로드 : $s3Key")
         } catch (e: IOException) {
-            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
+            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE)
         } catch (e: SdkClientException) {
-            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
+            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE)
         } catch (e: AmazonServiceException) {
-            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
+            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE)
         }
 
         return storeFileName

@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.index.Indexed
 @RedisHash(value = "token", timeToLive = 604800)
 data class TokenRedis(
     @Id
-    val id: Long,
+    val id: Long?,
 
     @Indexed
     var accessToken: String,

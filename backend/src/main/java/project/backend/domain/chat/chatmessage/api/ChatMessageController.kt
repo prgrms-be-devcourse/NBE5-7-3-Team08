@@ -78,8 +78,9 @@ class ChatMessageController(
     }
 
     @PostMapping("/send-image")
-    fun uploadImage(@RequestParam image: MultipartFile): Long {
+    fun uploadImage(@RequestParam image: MultipartFile): Long? {
         val imageFile = imageFileService.saveChatImage(image)
         return imageFile.imageId
     }
 }
+

@@ -64,7 +64,7 @@ class ChatMessageMapper {
 
     fun toEntityWithGit(gitMessage: GitMessageDto, githubBot: Member): ChatMessage {
         return ChatMessage(
-            chatRoom = gitMessage.room,
+            chatRoom = gitMessage.room!!,
             type = MessageType.GIT,
             content = gitMessage.content,
             sendAt = LocalDateTime.now(),
@@ -103,8 +103,8 @@ class ChatMessageMapper {
     // 저장된 메시지에서 ID, roomId, content만 꺼내서 저장하므로 ChatMessage 사용
     fun toSearchEntity(message: ChatMessage): ChatMessageSearch {
         return ChatMessageSearch(
-            id = message.id,
-            roomId = message.chatRoom.id,
+            id = message.id!!,
+            roomId = message.chatRoom.id!!,
             content = message.content ?: ""
         )
     }
@@ -115,25 +115,25 @@ class ChatMessageMapper {
         return ChatMessageResponse(
             senderName = senderName,
             content = message.content,
-            type = message.type,
+            type = message.type!!,
             sendAt = message.sendAt,
             language = message.codeLanguage,
             profileImageUrl = message.sender.profileImage,
             chatImageUrl = message.chatImage?.storeFileName,
-            senderId = message.sender.id,
-            messageId = message.id,
+            senderId = message.sender.id!!,
+            messageId = message.id!!,
             status = message.status
         )
     }
 
     fun toSearchResponse(message: ChatMessage): ChatMessageSearchResponse {
         return ChatMessageSearchResponse(
-            messageId = message.id,
+            messageId = message.id!!,
             content = message.content,
             senderName = message.sender.nickname,
             profileImageUrl = message.sender.profileImage,
             sendAt = message.sendAt,
-            type = message.type
+            type = message.type!!
         )
     }
 
@@ -141,13 +141,13 @@ class ChatMessageMapper {
         return ChatMessageResponse(
             senderName = "깃허브봇",
             content = message.content,
-            type = message.type,
+            type = message.type!!,
             sendAt = message.sendAt,
-            messageId = message.id,
+            messageId = message.id!!,
             profileImageUrl = githubProfile,
             language = null,
             chatImageUrl = null,
-            senderId = message.sender.id,
+            senderId = message.sender.id!!,
             status = message.status
         )
     }

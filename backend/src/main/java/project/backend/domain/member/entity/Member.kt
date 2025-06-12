@@ -30,7 +30,7 @@ class Member (
     val joinAt: LocalDateTime = LocalDateTime.now(),
 
     @OneToMany(mappedBy = "participant")
-    val participants: List<ChatParticipant> = emptyList(),
+    var participants: List<ChatParticipant> = emptyList(),
 
     @Column(nullable = false)
     var profileImage: String,

@@ -42,7 +42,7 @@ class MemberService (
             throw MemberException(MemberErrorCode.USERNAME_ALREADY_EXISTS)
         }
 
-        if (request.email != null && checkEmailAlreadyExists(request.email)) {
+        if (request.email != null && checkEmailAlreadyExists(request.email!!)) {
             throw MemberException(MemberErrorCode.EMAIL_ALREADY_EXISTS)
         }
 

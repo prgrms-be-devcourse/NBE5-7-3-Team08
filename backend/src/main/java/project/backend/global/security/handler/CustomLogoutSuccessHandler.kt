@@ -26,7 +26,7 @@ class CustomLogoutSuccessHandler(
 
         if (memberDetails != null) {
             tokenRedisRepository.deleteById(memberDetails.id)
-            log.info { "[로그아웃] ${memberDetails.getNickname()}의 리프레시 토큰 삭제" }
+            log.info { "[로그아웃] ${memberDetails.nickname}의 리프레시 토큰 삭제" }
         }
 
         CookieUtils.deleteCookie(response)

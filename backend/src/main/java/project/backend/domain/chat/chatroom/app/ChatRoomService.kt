@@ -27,7 +27,6 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.stream.Collectors
 
-
 @Slf4j
 @Service
 @Transactional(readOnly = true)
@@ -38,14 +37,14 @@ class ChatRoomService @Autowired constructor(
     val chatRoomMapper: ChatRoomMapper,
     val memberService: MemberService,
     val gitMessageService: GitMessageService,
-    val eventPublisher: ApplicationEventPublisher
-) {
+    val eventPublisher: ApplicationEventPublisher,
     @Value("\${github.username}")
-    private val githubUsername: String? = null
+    private val githubUsername: String
+) {
 
     @Transactional
     fun createChatRoom(request: ChatRoomRequest, ownerId: Long?): ChatRoomSimpleResponse {
-        val owner = memberService.getMemberById(ownerId)
+        val owner = memberService.getMemberById(ownerId!!)
 
         val chatRoom = chatRoomMapper.toEntity(request)
 
@@ -88,7 +87,7 @@ class ChatRoomService @Autowired constructor(
     @Transactional
     fun joinChatRoom(inviteCode: String, memberId: Long?): InviteJoinResponse {
         val room = getByInviteCode(inviteCode)
-        val member = memberService.getMemberById(memberId)
+        val member = memberService.getMemberById(memberId!!)
 
         handleParticipantJoin(room, member)
 
@@ -126,7 +125,7 @@ class ChatRoomService @Autowired constructor(
 
     @Transactional(readOnly = true)
     fun getRecentRoomInviteCode(memberId: Long?): String {
-        val roomId = memberService.getMemberById(memberId).recentRoomId
+        val roomId = memberService.getMemberById(memberId!!).recentRoomId
             ?: throw ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST)
 
         // 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
@@ -238,9 +237,9 @@ class ChatRoomService @Autowired constructor(
         return ChatRoomMapper.toListResponse(room)
     }
 
-    fun validateNotParticipant(memberId: Long, roomId: Long) {
+    fun validateNotParticipant(memberId: Long?, roomId: Long) {
         if (!chatParticipantRepository.existsByParticipantIdAndChatRoomIdAndIsActiveTrue
-                (memberId, roomId)
+                (memberId!!, roomId)
         ) {
             throw ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT)
         }

@@ -40,13 +40,13 @@ class OAuth2SuccessHandler(
         log.info { "oAuth2User = $oAuth2User" }
 
         val userDto = OAuthMemberDto(
-            oAuth2User.attributes["email"] as String?,
-            oAuth2User.attributes["name"] as String?,
-            oAuth2User.attributes["login"] as String?
+            oAuth2User.attributes["email"] as String,
+            oAuth2User.attributes["name"] as String,
+            oAuth2User.attributes["login"] as String
         )
 
         // 기존에 없는 email이면 회원가입
-        val member = oAuthSignUpService.OAuthSignUp(userDto)
+        val member = oAuthSignUpService.oAuthSignUp(userDto)
         val token = jwtProvider.generateTokenPair(MemberDetails(member))
 
         //쿠키 생성 및 저장
