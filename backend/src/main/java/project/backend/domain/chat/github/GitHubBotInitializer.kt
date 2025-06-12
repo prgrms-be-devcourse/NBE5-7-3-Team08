@@ -7,18 +7,17 @@ import project.backend.domain.imagefile.ImageFileRepository
 import project.backend.domain.member.dao.MemberRepository
 import project.backend.domain.member.entity.Member
 import project.backend.domain.member.entity.ProviderType
+import java.time.LocalDateTime
 
 @Component
 class GitHubBotInitializer(
     private val imageFileRepository: ImageFileRepository,
     private val memberRepository: MemberRepository,
-) {
-
     @Value("\${file.images.profile.github}")
-    private lateinit var githubProfile: String
-
+    private val githubProfile: String,
     @Value("\${github.username}")
-    private lateinit var githubUsername: String
+    private val githubUsername: String
+) {
 
     @PostConstruct
     fun init() {
@@ -26,7 +25,8 @@ class GitHubBotInitializer(
             username = githubUsername,
             nickname = githubUsername,
             provider = ProviderType.LOCAL,
-            profileImage = githubProfile
+            profileImage = githubProfile,
+            participants = null
         )
 
         memberRepository.save(gitHubBot)

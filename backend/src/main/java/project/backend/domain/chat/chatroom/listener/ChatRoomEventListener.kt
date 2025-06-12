@@ -43,7 +43,7 @@ class ChatRoomEventListener(
         val savedMessage: ChatMessage = chatMessageRepository.save(message)
 
         val eventMessageResponse: EventMessageResponse =
-            ChatRoomMapper.toJoinEventMessageResponse(joinEvent, savedMessage.id)
+            ChatRoomMapper.toJoinEventMessageResponse(joinEvent, savedMessage.id!!)
 
         simpMessagingTemplate.convertAndSend("/topic/chat/${joinEvent.roomId}", eventMessageResponse)
     }
@@ -51,7 +51,7 @@ class ChatRoomEventListener(
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleProfileUpdate(updateEvent: ProfileUpdateEvent) {
-        log.debug("🔥 프로필 업데이트 이벤트 수신: userId={}, nickname={}", updateEvent.userId(), updateEvent.nickname())
+        log.debug("🔥 프로필 업데이트 이벤트 수신: userId={}, nickname={}", updateEvent.userId, updateEvent.nickname)
         simpMessagingTemplate.convertAndSend("/topic/profile-update", updateEvent)
     }
 
@@ -65,7 +65,7 @@ class ChatRoomEventListener(
         val savedMessage = chatMessageRepository.save(message)
 
         val eventMessageResponse =
-            ChatRoomMapper.toLeaveEventMessageResponse(leaveEvent, savedMessage.id)
+            ChatRoomMapper.toLeaveEventMessageResponse(leaveEvent, savedMessage.id!!)
 
         simpMessagingTemplate.convertAndSend("/topic/chat/${leaveEvent.roomId}", eventMessageResponse)
         simpMessagingTemplate.convertAndSend("/topic/chat/${leaveEvent.roomId}/refresh", leaveEvent.roomId)

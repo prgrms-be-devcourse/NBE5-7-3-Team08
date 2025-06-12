@@ -1,5 +1,6 @@
 package project.backend.domain.chat.github.app
 
+import ChatMessageResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.simp.SimpMessagingTemplate
@@ -7,7 +8,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import project.backend.auth.token.dao.TokenRedisRepository
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository
-import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse
 import project.backend.domain.chat.chatmessage.entity.ChatMessage
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository
@@ -80,7 +80,7 @@ class GitMessageService(
         val webhookUrl = makeWebhookUrl(roomId)
 
         gitHubClient.validateAdminPermission(
-            tokenRedis.githubAccess,
+            tokenRedis.githubAccess!!,
             gitRepoDto.ownerName,
             gitRepoDto.repoName
         )

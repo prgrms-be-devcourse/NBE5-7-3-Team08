@@ -34,7 +34,7 @@ class JwtAuthenticationFilter(
         log.info { "JWT 필터 도달 = ${request.requestURI}" }
 
         val accessToken = CookieUtils.getCookie(request, "accessToken")
-            .orElseThrow { CustomJwtException(TokenErrorCode.NOT_FOUND_TOKEN) }.value
+            ?.value ?: throw CustomJwtException(TokenErrorCode.NOT_FOUND_TOKEN)
 
         when (jwtProvider.validateAccessToken(accessToken)) {
             TokenStatus.VALID -> {
