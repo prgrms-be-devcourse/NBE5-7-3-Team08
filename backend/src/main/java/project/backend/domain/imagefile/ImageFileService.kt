@@ -8,31 +8,30 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import project.backend.global.exception.errorcode.ImageFileErrorCode
 import project.backend.global.exception.ex.ImageFileException
+import project.backend.global.exception.errorcode.ImageFileErrorCode
+import software.amazon.awssdk.core.exception.SdkClientException
 import java.io.IOException
 import java.util.*
 
 @Service
 class ImageFileService(
     private val imageFileRepository: ImageFileRepository,
-    private val amazonS3: AmazonS3
+    private val amazonS3: AmazonS3,
+    @Value("\${file.images.profile.path}")
+    private val profilePath: String,
+    @Value("\${file.images.chat.path}")
+    private val chatImagePath: String,
+    @Value("\${cloud.aws.s3.bucket}")
+    private val bucket: String,
 ) {
-
-    @field: Value("\${file.images.profile.path}")
-    private lateinit var profilePath: String
-
-    @field: Value("\${file.images.chat.path}")
-    private lateinit var chatImagePath: String
-
-    @field: Value("\${cloud.aws.s3.bucket}")
-    private lateinit var bucket: String
 
     @Transactional
     fun saveChatImage(file: MultipartFile): ImageFile {
         val originalFilename = file.originalFilename
         val storeFileName = uploadImageToS3(file, chatImagePath)
-        val imageFile = ImageFile.of(storeFileName, originalFilename)
+
+        val imageFile = ImageFile.of(storeFileName, originalFilename ?: "")
         return imageFileRepository.save(imageFile)
     }
 
@@ -53,8 +52,9 @@ class ImageFileService(
 
             amazonS3.putObject(PutObjectRequest(bucket, s3Key, file.inputStream, metadata))
             println("[S3] 이미지 업로드 : $s3Key")
-
         } catch (e: IOException) {
+            throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
+        } catch (e: SdkClientException) {
             throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
         } catch (e: AmazonServiceException) {
             throw ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE, e)
@@ -68,8 +68,8 @@ class ImageFileService(
 
         validateFileName(originalFilename)
         checkFileTypeIsImage(file.contentType)
-        val extension = originalFilename.substringAfterLast('.', "").lowercase()
 
+        val extension = originalFilename.substringAfterLast('.', "").lowercase(Locale.getDefault())
         checkFileExtensionIsImage(".$extension")
 
         return "${UUID.randomUUID()}.$extension"
@@ -89,14 +89,13 @@ class ImageFileService(
     }
 
     private fun validateFileName(fileName: String) {
-        if (!fileName.contains('.')) {
+        if (!fileName.contains(".")) {
             throw ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE)
         }
     }
 
     @Transactional(readOnly = true)
     fun getImageById(imageFileId: Long): ImageFile =
-        imageFileRepository.findById(imageFileId).orElseThrow {
-            ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND)
-        }
+        imageFileRepository.findById(imageFileId)
+            .orElseThrow { ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND) }
 }
