@@ -63,7 +63,7 @@ const Sidebar = () => {
   useEffect(() => {
     fetchChatRooms(currentPage);
     fetchCurrentUser();
-  }, [currentPage]);
+  }, [currentPage, inviteCode]);
 
   // 현재 채팅방이 변경될 때 해당 방의 읽지 않은 메시지 상태 제거
   useEffect(() => {
