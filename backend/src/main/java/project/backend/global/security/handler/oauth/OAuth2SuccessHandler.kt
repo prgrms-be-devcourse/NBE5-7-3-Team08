@@ -40,7 +40,7 @@ class OAuth2SuccessHandler(
         log.info { "oAuth2User = $oAuth2User" }
 
         val userDto = OAuthMemberDto(
-            oAuth2User.attributes["email"] as String,
+            oAuth2User.attributes["email"] as String?,
             oAuth2User.attributes["name"] as String,
             oAuth2User.attributes["login"] as String
         )
