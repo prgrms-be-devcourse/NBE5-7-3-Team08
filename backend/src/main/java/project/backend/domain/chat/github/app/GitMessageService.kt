@@ -54,7 +54,7 @@ class GitMessageService(
         val room = chatRoomRepository.findById(roomId)
             .orElseThrow { ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND) }
 
-        sendGitMessage(room, gitMessage.attachRoom(gitMessage, room))
+        sendGitMessage(room, gitMessage.attachRoom(room))
     }
 
     private fun sendGitMessage(room: ChatRoom, gitMessage: GitMessageDto) {

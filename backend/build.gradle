@@ -67,6 +67,7 @@ dependencies {
 
     //코틀린
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation 'org.jetbrains.kotlin:kotlin-reflect:2.1.21'
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.7")
@@ -82,6 +83,7 @@ tasks.named('test') {
 }
 
 allOpen {
+    annotation("org.springframework.transaction.annotation.Transactional")
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.Embeddable")
     annotation("jakarta.persistence.MappedSuperclass")

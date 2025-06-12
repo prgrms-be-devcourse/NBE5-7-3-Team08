@@ -32,7 +32,7 @@ import java.util.stream.Collectors
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-class ChatRoomService @Autowired constructor (
+class ChatRoomService @Autowired constructor(
     val chatRoomRepository: ChatRoomRepository,
     val chatParticipantRepository: ChatParticipantRepository,
     val chatRoomMapper: ChatRoomMapper,
@@ -57,7 +57,7 @@ class ChatRoomService @Autowired constructor (
         if (!request.repositoryUrl.isBlank()) {
             gitMessageService.registerWebhook(
                 request.repositoryUrl,
-                savedRoom.id, owner.id
+                savedRoom.id!!, owner.id!!
             ) //웹훅 자동 등록
             joinGitHubBot(savedRoom) //깃허브봇 채팅 참가
         }
