@@ -1,6 +1,5 @@
 package project.backend.global.security.config
 
-import lombok.RequiredArgsConstructor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.Customizer
@@ -19,7 +18,6 @@ import project.backend.global.security.handler.oauth.OAuth2FailureHandler
 import project.backend.global.security.handler.oauth.OAuth2SuccessHandler
 
 @Configuration
-@RequiredArgsConstructor
 class SecurityConfig(
     private val formFailureHandler: FormFailureHandler,
     private val formSuccessHandler: FormSuccessHandler,
