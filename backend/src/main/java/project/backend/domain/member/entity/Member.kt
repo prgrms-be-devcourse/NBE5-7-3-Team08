@@ -1,7 +1,6 @@
 package project.backend.domain.member.entity
 
 import jakarta.persistence.*
-import lombok.*
 import org.springframework.security.crypto.password.PasswordEncoder
 import project.backend.domain.chat.chatroom.entity.ChatParticipant
 import java.time.LocalDateTime

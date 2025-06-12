@@ -8,7 +8,7 @@ import project.backend.domain.member.entity.ProviderType
 
 object MemberMapper {
 
-    fun toEntity(
+	fun toEntity(
         request: SignUpRequest, encryptedPassword: String, defaultProfileImg: String
     ): Member {
         return Member(
@@ -21,7 +21,7 @@ object MemberMapper {
         )
     }
 
-    fun toResponse(member: Member): MemberResponse {
+	fun toResponse(member: Member): MemberResponse {
         return MemberResponse(
             id = member.id!!,
             username = member.username,

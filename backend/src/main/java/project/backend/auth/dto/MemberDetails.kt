@@ -10,7 +10,7 @@ import project.backend.domain.member.entity.ProviderType
 class MemberDetails(member: Member) : UserDetails {
 
     val id: Long = member.id!!
-    val usernameValue: String = member.username
+    val username: String = member.username
     val email: String? = member.email
     private val passwordValue: String? = member.password
     val nickname: String = member.nickname
@@ -22,7 +22,7 @@ class MemberDetails(member: Member) : UserDetails {
 
     override fun getPassword(): String? = passwordValue
 
-    override fun getUsername(): String = usernameValue
+    override fun getUsername(): String = username
 
     override fun isAccountNonExpired(): Boolean = true
 
