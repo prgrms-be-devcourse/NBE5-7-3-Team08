@@ -69,9 +69,9 @@ public class ChatMessageMapper {
 		return ChatMessage.builder()
 			.chatRoom(room)
 			.sender(sender)
-			.content(joinEvent.nickname() + "님이 입장했습니다.")
+			.content(joinEvent.getNickname() + "님이 입장했습니다.")
 			.type(MessageType.EVENT)
-			.sendAt(joinEvent.joinAt())
+			.sendAt(joinEvent.getJoinAt())
 			.build();
 	}
 
@@ -80,9 +80,9 @@ public class ChatMessageMapper {
 		return ChatMessage.builder()
 			.chatRoom(room)
 			.sender(sender)
-			.content(leaveEvent.nickname() + "님이 나갔습니다.")
+			.content(leaveEvent.getNickname() + "님이 나갔습니다.")
 			.type(MessageType.EVENT)
-			.sendAt(leaveEvent.leaveAt())
+			.sendAt(leaveEvent.getLeaveAt())
 			.build();
 	}
 

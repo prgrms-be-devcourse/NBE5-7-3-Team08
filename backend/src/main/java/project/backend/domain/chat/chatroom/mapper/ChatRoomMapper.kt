@@ -9,30 +9,28 @@ import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent
 import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent
 import project.backend.domain.chat.chatroom.entity.ChatParticipant
 import project.backend.domain.chat.chatroom.entity.ChatRoom
-import project.backend.domain.chat.chatroom.entity.ChatRoom.inviteCode
-import project.backend.domain.chat.chatroom.entity.ChatRoom.name
-import project.backend.domain.chat.chatroom.entity.ChatRoom.repositoryUrl
 import project.backend.domain.member.entity.Member
 import java.time.LocalDateTime
 import java.util.*
 
 @Component
 class ChatRoomMapper {
-    // 임창인: 간단 응답 변환
+
+    //임창인: 간단 응답 변환
     fun toSimpleResponse(entity: ChatRoom, owner: Member): ChatRoomSimpleResponse {
-        return ChatRoomSimpleResponse.of(
-            entity.id,
+        return ChatRoomSimpleResponse(
+            entity.id!!,
             entity.name,
             entity.repositoryUrl,
-            owner.id,
+            owner.id!!,
             entity.inviteCode
         )
     }
 
-
     // 임창인 엔티티 변환
     fun toEntity(dto: ChatRoomRequest): ChatRoom {
-        return ChatRoom(null,
+        return ChatRoom(
+            null,
             dto.name,
             dto.repositoryUrl,
             LocalDateTime.now(),
@@ -41,45 +39,44 @@ class ChatRoomMapper {
 
     companion object {
         fun toListResponse(chatRoom: ChatRoom): RoomInfoResponse {
-            return RoomInfoResponse.builder()
-                .roomId(chatRoom.id)
-                .roomName(chatRoom.name)
-                .repositoryUrl(chatRoom.repositoryUrl)
-                .inviteCode(chatRoom.inviteCode)
-                .build()
+            return RoomInfoResponse(
+                chatRoom.id!!,
+                chatRoom.name,
+                chatRoom.repositoryUrl,
+                chatRoom.inviteCode
+            )
         }
 
         // 강현님: 참여자 응답 변환
         fun toParticipantResponse(p: ChatParticipant): ChatParticipantResponse {
-            return ChatParticipantResponse.builder()
-                .memberId(p.participant.id)
-                .nickname(p.participant.nickname)
-                .profileImageUrl(p.participant.profileImage)
-                .isOwner(p.isOwner)
-                .build()
+            return ChatParticipantResponse(
+                p.participant.id!!,
+                p.participant.nickname,
+                p.participant.profileImage,
+                p.isOwner
+            )
         }
-
 
         //문성이꺼
         fun toProfileResponse(chatRoom: ChatRoom): MyChatRoomResponse {
-            return MyChatRoomResponse.builder()
-                .roomId(chatRoom.id)
-                .roomName(chatRoom.name)
-                .participantCount(chatRoom.getActiveParticipantCount())
-                .inviteCode(chatRoom.inviteCode)
-                .build()
+            return MyChatRoomResponse(
+                chatRoom.id!!,
+                chatRoom.name,
+                chatRoom.getActiveParticipantCount(),
+                chatRoom.inviteCode
+            )
         }
 
         fun toInviteJoinResponse(
-            id: Long?,
-            inviteCode: String?,
-            name: String?
+            id: Long,
+            inviteCode: String,
+            name: String
         ): InviteJoinResponse {
-            return InviteJoinResponse.builder()
-                .id(id)
-                .inviteCode(inviteCode)
-                .name(name)
-                .build()
+            return InviteJoinResponse(
+                id,
+                inviteCode,
+                name
+            )
         }
 
         private fun generateInviteCode(): String {
@@ -88,38 +85,40 @@ class ChatRoomMapper {
 
         fun toJoinEventMessageResponse(
             joinEvent: JoinChatRoomEvent,
-            messageId: Long?
+            messageId: Long
         ): EventMessageResponse {
-            return EventMessageResponse.builder()
-                .messageId(messageId)
-                .type(MessageType.EVENT)
-                .roomId(joinEvent.roomId)
-                .sender(joinEvent.nickname)
-                .content(joinEvent.nickname + "님이 입장했습니다.")
-                .sendAt(joinEvent.joinAt)
-                .build()
+            return EventMessageResponse(
+                messageId,
+                MessageType.EVENT,
+                joinEvent.nickname,
+                joinEvent.roomId,
+                joinEvent.nickname + "님이 입장했습니다.",
+                joinEvent.joinAt)
+
         }
 
         fun toLeaveEventMessageResponse(
             leaveEvent: LeaveChatRoomEvent,
-            messageId: Long?
+            messageId: Long
         ): EventMessageResponse {
-            return EventMessageResponse.builder()
-                .messageId(messageId)
-                .type(MessageType.EVENT)
-                .roomId(leaveEvent.roomId)
-                .sender(leaveEvent.nickname)
-                .content(leaveEvent.nickname + "님이 나갔습니다.")
-                .sendAt(leaveEvent.leaveAt)
-                .build()
+            return EventMessageResponse(
+                messageId,
+                MessageType.EVENT,
+                leaveEvent.nickname,
+                leaveEvent.roomId,
+                leaveEvent.nickname + "님이 나갔습니다.",
+                leaveEvent.leaveAt
+            )
         }
 
         fun toDeleteEventMessageResponse(deleteEvent: DeleteChatRoomEvent): EventMessageResponse {
-            return EventMessageResponse.builder()
-                .type(MessageType.EVENT)
-                .roomId(deleteEvent.roomId)
-                .content("채팅방 '" + deleteEvent.roomName + "'이 삭제되었습니다.")
-                .build()
+            return EventMessageResponse(
+                null,
+                MessageType.EVENT,
+                "System",
+                deleteEvent.roomId,
+                "채팅방 '" + deleteEvent.roomName + "'이 삭제되었습니다.",
+            )
         }
     }
 }
