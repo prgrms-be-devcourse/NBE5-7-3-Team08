@@ -3,6 +3,7 @@ package project.backend.global.security.handler.form;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
@@ -14,8 +15,6 @@ import org.springframework.stereotype.Component;
 import project.backend.global.exception.ErrorResponse;
 import project.backend.global.exception.errorcode.ErrorCode;
 import project.backend.global.exception.errorcode.LoginErrorCode;
-
-import java.io.IOException;
 import project.backend.global.exception.ex.AuthException;
 
 @Slf4j
@@ -28,7 +27,7 @@ public class FormFailureHandler implements AuthenticationFailureHandler {
 
 		ErrorCode loginErrorCode = getLoginErrorCode(exception);
 
-		response.setStatus(loginErrorCode.getStatus().value());
+		response.setStatus(loginErrorCode.status.value());
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 
