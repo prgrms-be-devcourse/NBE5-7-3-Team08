@@ -1,6 +1,5 @@
 package project.backend.domain.member.app
 
-import lombok.extern.slf4j.Slf4j
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.Authentication
@@ -25,9 +24,7 @@ import project.backend.global.exception.errorcode.AuthErrorCode
 import project.backend.global.exception.errorcode.MemberErrorCode
 import project.backend.global.exception.ex.AuthException
 import project.backend.global.exception.ex.MemberException
-import java.util.*
 
-@Slf4j
 @Service
 @Transactional
 class MemberService (
@@ -49,10 +46,10 @@ class MemberService (
             throw MemberException(MemberErrorCode.EMAIL_ALREADY_EXISTS)
         }
 
-        val encryptedPassword = passwordEncoder!!.encode(request.password)
+        val encryptedPassword = passwordEncoder.encode(request.password)
 
-        val newMember = memberRepository!!.save(
-            toEntity(request, encryptedPassword, defaultProfileImg!!)
+        val newMember = memberRepository.save(
+            toEntity(request, encryptedPassword, defaultProfileImg)
         )
 
         return toResponse(newMember)
@@ -67,7 +64,7 @@ class MemberService (
 
         doUpdateMemberInfo(targetMember, request, file)
 
-        eventPublisher!!.publishEvent(of(targetMember))
+        eventPublisher.publishEvent(of(targetMember))
 
         return toResponse(targetMember)
     }
@@ -85,7 +82,7 @@ class MemberService (
         }
 
         if (file != null) {
-            val profileImage = imageFileService!!.saveProfileImage(file)
+            val profileImage = imageFileService.saveProfileImage(file)
             targetMember.updateProfileImage(profileImage)
         }
     }
@@ -100,7 +97,7 @@ class MemberService (
 
         val currentPassword = targetMember.password
 
-        if (!passwordEncoder!!.matches(
+        if (!passwordEncoder.matches(
                 request.currentPassword,
                 currentPassword
             )

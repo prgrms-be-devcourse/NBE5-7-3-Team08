@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.*
-import com.auth0.jwt.interfaces.DecodedJWT
 import io.lettuce.core.RedisException
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -17,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import project.backend.auth.app.CookieUtils
 import project.backend.auth.dto.MemberDetails
 import project.backend.auth.token.dao.TokenRedisRepository
-import project.backend.auth.token.entity.TokenRedis
 import project.backend.domain.member.dao.MemberRepository
-import project.backend.domain.member.entity.Member
 import project.backend.global.exception.errorcode.TokenErrorCode
 import project.backend.global.exception.ex.CustomJwtException
 import java.util.Date
