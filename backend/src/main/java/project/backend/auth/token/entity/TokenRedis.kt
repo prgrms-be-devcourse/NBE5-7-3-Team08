@@ -14,7 +14,7 @@ data class TokenRedis(
 
     val refreshToken: String,
 
-    val githubAccess: String?
+    val githubAccess: String? = null
 ) {
     fun updateAccessToken(accessToken: String) {
         this.accessToken = accessToken
