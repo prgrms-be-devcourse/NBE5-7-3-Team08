@@ -1,17 +1,15 @@
-package project.backend.domain.imagefile;
+package project.backend.domain.imagefile
 
-import java.util.Objects;
-import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 @Repository
-public interface ImageFileRepository extends JpaRepository<ImageFile, Long> {
+interface ImageFileRepository : JpaRepository<ImageFile, Long> {
 
-    boolean existsByStoreFileName(String imgName);
+    fun existsByStoreFileName(imgName: String): Boolean
 
-    Optional<ImageFile> findByUploadFileName(String uploadFileName);
+    fun findByUploadFileName(uploadFileName: String): Optional<ImageFile>
 
-    Optional<ImageFile> findByStoreFileName(String storeFileName);
+    fun findByStoreFileName(storeFileName: String): Optional<ImageFile>
 }

@@ -1,32 +1,31 @@
-package project.backend.domain.imagefile.AWS;
+package project.backend.domain.imagefile.AWS
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import com.amazonaws.auth.AWSStaticCredentialsProvider
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
 @Configuration
-public class S3Config {
+class S3Config(
+    @Value("\${cloud.aws.credentials.access-key}")
+    private val accessKey: String,
 
-	@Value("${cloud.aws.credentials.access-key}")
-	private String accessKey;
+    @Value("\${cloud.aws.credentials.secret-key}")
+    private val secretKey: String,
 
-	@Value("${cloud.aws.credentials.secret-key}")
-	private String secretKey;
+    @Value("\${cloud.aws.region.static}")
+    private val region: String,
+) {
 
-	@Value("${cloud.aws.region.static}")
-	private String region;
-
-	@Bean
-	public AmazonS3 amazonS3() {
-		BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-		return AmazonS3ClientBuilder.standard()
-			.withRegion(region)
-			.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-			.build();
-	}
-
+    @Bean
+    fun amazonS3(): AmazonS3 {
+        val awsCreds = BasicAWSCredentials(accessKey, secretKey)
+        return AmazonS3ClientBuilder.standard()
+            .withRegion(region)
+            .withCredentials(AWSStaticCredentialsProvider(awsCreds))
+            .build()
+    }
 }

@@ -1,41 +1,27 @@
-package project.backend.domain.imagefile;
+package project.backend.domain.imagefile
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
 
 @Entity
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ImageFile {
+class ImageFile(
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long imageId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val imageId: Long? = null,
 
-	@Column(nullable = false)
-	private String storeFileName;
+    @Column(nullable = false)
+    val storeFileName: String,
 
-	@Column(nullable = false)
-	private String uploadFileName;
+    @Column(nullable = false)
+    val uploadFileName: String
 
-
-	public static ImageFile of(String storeFileName, String uploadFileName) {
-		return ImageFile.builder()
-			.storeFileName(storeFileName)
-			.uploadFileName(uploadFileName)
-			.build();
-	}
-
+) {
+    companion object {
+        fun of(storeFileName: String, uploadFileName: String) =
+            ImageFile(storeFileName = storeFileName, uploadFileName = uploadFileName)
+    }
 }
