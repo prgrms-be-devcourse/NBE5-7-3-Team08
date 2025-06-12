@@ -53,7 +53,7 @@ class ChatMessageController(
         @RequestParam(defaultValue = "10") size: Int
     ): Page<ChatMessageSearchResponse> {
         val request = ChatMessageSearchRequest.of(keyword, page, size)
-        return chatMessageService.searchMessages(memberDetails.getId(), roomId, request)
+        return chatMessageService.searchMessages(memberDetails.id, roomId, request)
     }
 
     @GetMapping("/{roomId}/messages")
@@ -63,7 +63,7 @@ class ChatMessageController(
         @RequestParam(required = false) cursor: Long?,
         @RequestParam(defaultValue = "30") size: Int
     ): ChatScrollResponse {
-        return chatMessageService.getMessagesByRoomId(memberDetails.getId(), roomId, cursor, size)
+        return chatMessageService.getMessagesByRoomId(memberDetails.id, roomId, cursor, size)
     }
 
     @MessageMapping("/delete-message/{roomId}")
@@ -81,4 +81,5 @@ class ChatMessageController(
     fun uploadImage(@RequestParam image: MultipartFile): Long {
         val imageFile = imageFileService.saveChatImage(image)
         return imageFile.imageId
+    }
 }
