@@ -7,6 +7,6 @@ data class ChatParticipantResponse(
 
     val profileImageUrl: String,
 
-    val isOwner: Boolean
+    val owner: Boolean
 )
 

@@ -174,7 +174,7 @@ class ChatRoomService @Autowired constructor(
             .findByChatRoomIdAndParticipantIdAndIsActiveTrue(roomId, memberId)
             ?: throw ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT)
 
-        if (participant.isOwner) {
+        if (participant.owner) {
             throw ChatRoomException(ChatRoomErrorCode.OWNER_CANNOT_LEAVE)
         }
 
@@ -226,7 +226,7 @@ class ChatRoomService @Autowired constructor(
 
     private fun findOwnerId(roomId: Long): Long? {
         val owner: ChatParticipant =
-            chatParticipantRepository.findByChatRoomIdAndIsOwnerTrue(roomId)
+            chatParticipantRepository.findByChatRoomIdAndOwnerTrue(roomId)
                 ?: throw ChatRoomException(ChatRoomErrorCode.OWNER_NOT_FOUND)
         return owner.participant.id
     }
@@ -254,7 +254,7 @@ class ChatRoomService @Autowired constructor(
                 roomId, memberId
             ) ?: throw ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT)
 
-        if (!participant.isOwner) {
+        if (!participant.owner) {
             throw ChatRoomException(ChatRoomErrorCode.OWNER_PERMISSION_REQUIRED)
         }
 

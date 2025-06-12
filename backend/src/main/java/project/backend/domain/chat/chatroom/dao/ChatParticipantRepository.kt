@@ -34,7 +34,7 @@ interface ChatParticipantRepository : JpaRepository<ChatParticipant, Long> {
         participantId: Long
     ): ChatParticipant?
 
-    fun findByChatRoomIdAndIsOwnerTrue(
+    fun findByChatRoomIdAndOwnerTrue(
         roomId: Long
     ): ChatParticipant?
 

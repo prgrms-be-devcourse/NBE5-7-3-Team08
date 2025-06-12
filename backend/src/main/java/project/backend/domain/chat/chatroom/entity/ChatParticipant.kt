@@ -24,7 +24,7 @@ class ChatParticipant protected constructor() {
     @JoinColumn(name = "room_id")
     lateinit var chatRoom: ChatRoom
 
-    var isOwner: Boolean = false
+    var owner: Boolean = false
     var isActive: Boolean = true
     var joinAt: LocalDateTime? = null
 
@@ -33,13 +33,13 @@ class ChatParticipant protected constructor() {
         id: Long? = null,
         participant: Member,
         chatRoom: ChatRoom,
-        isOwner: Boolean = false,
+        owner: Boolean = false,
         joinAt: LocalDateTime = LocalDateTime.now()
     ) : this() {
         this.id = id
         this.participant = participant
         this.chatRoom = chatRoom
-        this.isOwner = isOwner
+        this.owner = owner
         this.joinAt = joinAt
     }
 
@@ -56,7 +56,7 @@ class ChatParticipant protected constructor() {
             return ChatParticipant(
                 participant = participant,
                 chatRoom = chatRoom,
-                isOwner = true,
+                owner = true,
                 joinAt = LocalDateTime.now()
             )
         }

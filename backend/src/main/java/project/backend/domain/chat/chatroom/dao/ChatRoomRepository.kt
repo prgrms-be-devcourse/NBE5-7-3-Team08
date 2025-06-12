@@ -29,7 +29,7 @@ interface ChatRoomRepository : JpaRepository<ChatRoom, Long> {
         SELECT cr
         FROM ChatRoom cr
         JOIN cr.participants cp
-        WHERE cp.participant.id = :ownerId AND cp.isOwner=true AND cp.isActive = true
+        WHERE cp.participant.id = :ownerId AND cp.owner=true AND cp.isActive = true
         """
     )
     fun findAllRoomsByOwnerId(

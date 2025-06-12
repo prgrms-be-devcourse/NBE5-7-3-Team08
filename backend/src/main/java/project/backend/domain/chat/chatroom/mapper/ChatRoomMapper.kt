@@ -53,7 +53,7 @@ class ChatRoomMapper {
                 p.participant.id!!,
                 p.participant.nickname,
                 p.participant.profileImage,
-                p.isOwner
+                p.owner
             )
         }
 
