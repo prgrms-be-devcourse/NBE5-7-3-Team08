@@ -80,3 +80,10 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+allOpen {
+    annotation("org.springframework.transaction.annotation.Transactional")
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.persistence.MappedSuperclass")
+}
