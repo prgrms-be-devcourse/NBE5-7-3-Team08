@@ -52,9 +52,4 @@ public class MemberDetails implements UserDetails {
 			.profileImg(memberDetails.getProfileImg())
 			.build();
 	}
-
-	public Long getId() {
-		return this.id;
-	}
-
 }
