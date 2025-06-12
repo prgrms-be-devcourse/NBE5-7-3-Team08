@@ -16,8 +16,6 @@ class ChatMessageSearch(
     var content: String
 ) {
 
-    protected constructor() : this(0, 0, "")
-
     fun updateContent(content: String) {
         this.content = content
     }

@@ -7,56 +7,49 @@ import project.backend.domain.member.entity.Member
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "chat_message")
 class ChatMessage(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "message_id")
-    val id: Long = 0,
+    val id: Long? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "member_id")
-    val sender: Member,
+    var sender: Member,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "room_id")
-    val chatRoom: ChatRoom,
+    var chatRoom: ChatRoom,
 
     @Lob
     @Column(columnDefinition = "TEXT")
     var content: String? = null,
 
-    val sendAt: LocalDateTime,
+    var sendAt: LocalDateTime,
 
     @Enumerated(EnumType.STRING)
-    val type: MessageType,
+    var type: MessageType? = null,
 
     var codeLanguage: String? = null,
 
     @OneToOne(cascade = [CascadeType.ALL], orphanRemoval = true)
     @JoinColumn(name = "chat_image_id")
-    val chatImage: ImageFile? = null,
+    var chatImage: ImageFile? = null,
 
     @Enumerated(EnumType.STRING)
     var status: MessageStatus = MessageStatus.NO_CHANGE
 ) {
-    protected constructor() : this(
-        sender = Member(),
-        chatRoom = ChatRoom(),
-        sendAt = LocalDateTime.now(),
-        type = MessageType.TEXT
-    )
 
     fun updateContent(newContent: String?) {
-        newContent?.let {
-            content = it
+        if (newContent != null) {
+            content = newContent
             status = MessageStatus.EDITED
         }
     }
 
     fun updateLanguage(language: String?) {
-        language?.let {
-            codeLanguage = it
+        if (language != null) {
+            codeLanguage = language
             status = MessageStatus.EDITED
         }
     }
