@@ -46,10 +46,13 @@ class formLoginTest {
         val password = "1234"
         val loginUser = createUser(username, password)
 
-        whenever(loginService.loadUserByUsername(loginUser.usernameValue)).thenReturn(loginUser)
+        whenever(loginService.loadUserByUsername(loginUser.usernameValue)).thenReturn(
+            loginUser
+        )
         whenever(jwtProvider.generateTokenPair(any())).thenReturn(expectedToken)
 
 //    when & then
+        val expectedMsg = "로그인 성공"
         mockMvc.perform(
             post("/login")
                 .param("username", "jeeun5482")
@@ -58,14 +61,30 @@ class formLoginTest {
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$.message").value("로그인 성공"))
+            .andExpect(jsonPath("$.message").value(expectedMsg))
             .andExpect(cookie().value("accessToken", accessToken))
     }
 
     @Test
     fun `form 로그인 실패 시 401 상태와 실패 메시지를 반환한다`() {
+        //given
+        val username = "jeeun5482"
+        val correctPassword = "1234"
+        val expectedUser = createUser(username, correctPassword)
 
+        val wrongPassword = "wrong"
 
+        whenever(loginService.loadUserByUsername(username)).thenReturn(expectedUser)
+
+        //when & then
+        mockMvc.perform(
+            post("/login")
+                .param("username", username)
+                .param("password", wrongPassword)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        )
+            .andExpect(status().isUnauthorized) //401
+            .andExpect(content().contentType("application/json;charset=UTF-8"))
     }
 
     private fun createUser(username: String, password: String): MemberDetails {
