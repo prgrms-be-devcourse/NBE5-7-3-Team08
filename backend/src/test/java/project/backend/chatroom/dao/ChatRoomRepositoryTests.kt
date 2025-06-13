@@ -36,7 +36,7 @@ class ChatRoomRepositoryTests @Autowired constructor(
         val member = memberRepository.save(createMember(id = 1L, username = "userSave"))
 
         // when
-        val room = chatRoomRepository.save(createChatRoom(name = "참여방"))
+        val room = chatRoomRepository.save(createChatRoom(id = 2L, name = "참여방"))
         val participant = participantRepository.save(createParticipant(member, room))
 
         // then
@@ -53,7 +53,7 @@ class ChatRoomRepositoryTests @Autowired constructor(
     fun `참여자 ID로 채팅방 조회 테스트`() {
         // given
         val member = memberRepository.save(createMember(id = 2L, username = "userRead"))
-        val room = chatRoomRepository.save(createChatRoom(name = "참여방"))
+        val room = chatRoomRepository.save(createChatRoom(id = 2L, name = "참여방"))
         val participant = participantRepository.save(createParticipant(member, room))
 
         // when
@@ -71,7 +71,7 @@ class ChatRoomRepositoryTests @Autowired constructor(
     fun `초대코드로 채팅방 조회 테스트`() {
         //given
         val inviteCode = "JOIN777"
-        val room = chatRoomRepository.save(createChatRoom(name = "채팅방", inviteCode = inviteCode))
+        val room = chatRoomRepository.save(createChatRoom(name = "채팅방", id=3L,inviteCode = inviteCode))
 
         //when
         val found = chatRoomRepository.findByInviteCode(inviteCode)
@@ -85,8 +85,8 @@ class ChatRoomRepositoryTests @Autowired constructor(
     fun `Owner id로 내가 만든 채팅방 조회 테스트`() {
         //given
         val owner = memberRepository.save(createMember(id= 3L, username = "ownerA"))
-        val room1 = chatRoomRepository.save(createChatRoom(name = "Room A"))
-        val room2 = chatRoomRepository.save(createChatRoom(name = "Room B"))
+        val room1 = chatRoomRepository.save(createChatRoom(id = 3L, name = "Room A"))
+        val room2 = chatRoomRepository.save(createChatRoom(id = 4L, name = "Room B"))
         participantRepository.save(createParticipant(owner, room1, owner = true))
         participantRepository.save(createParticipant(owner, room2, owner = true))
 

@@ -29,12 +29,14 @@ fun createMember(
 }
 
 fun createChatRoom(
+    id: Long,
     name: String = "Test Room",
     repositoryUrl: String = "https://github.com/example/repo",
     inviteCode: String = "INV-${System.currentTimeMillis()}",
     createdAt: LocalDateTime = LocalDateTime.now()
 ): ChatRoom {
     return ChatRoom(
+        id = id,
         name = name,
         repositoryUrl = repositoryUrl,
         inviteCode = inviteCode,
