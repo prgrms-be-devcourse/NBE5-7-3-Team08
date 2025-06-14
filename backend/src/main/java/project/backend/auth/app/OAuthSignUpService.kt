@@ -11,11 +11,11 @@ import project.backend.domain.imagefile.ImageFileService
 @Service
 class OAuthSignUpService(
     private val memberRepository: MemberRepository,
-    private val imageFileService: ImageFileService
-) {
+    private val imageFileService: ImageFileService,
 
     @Value("\${file.images.profile.default}")
-    private lateinit var defaultProfileImg: String
+    private val defaultProfileImg: String
+) {
 
     fun oAuthSignUp(request: OAuthMemberDto): Member {
         return memberRepository.findByUsername(request.login)
