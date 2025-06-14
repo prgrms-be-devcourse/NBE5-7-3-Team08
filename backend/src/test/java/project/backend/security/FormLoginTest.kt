@@ -98,7 +98,7 @@ class FormLoginTest {
             password = passwordEncoder.encode(password),
             nickname = "ziening",
             provider = ProviderType.LOCAL,
-            profileImage = "image"
+            profileImage = "default_profile.png"
         )
         return MemberDetails(member)
     }
