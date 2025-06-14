@@ -48,6 +48,7 @@ fun createParticipant(
     member: Member,
     chatRoom: ChatRoom,
     owner: Boolean = false,
+    active: Boolean = true,
     joinAt: LocalDateTime = LocalDateTime.now()
 ): ChatParticipant {
     val participant = ChatParticipant(

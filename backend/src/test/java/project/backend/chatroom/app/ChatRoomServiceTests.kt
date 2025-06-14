@@ -8,11 +8,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationEventPublisher
 import project.backend.chatroom.util.createChatRoom
 import project.backend.chatroom.util.createMember
+import project.backend.chatroom.util.createParticipant
 import project.backend.domain.chat.chatroom.app.ChatRoomService
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse
+import project.backend.domain.chat.chatroom.dto.event.DeleteChatRoomEvent
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent
 import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent
 import project.backend.domain.chat.chatroom.entity.ChatParticipant
@@ -22,9 +24,11 @@ import project.backend.domain.chat.github.app.GitMessageService
 import project.backend.domain.member.app.MemberService
 import project.backend.domain.member.entity.Member
 import project.backend.domain.member.entity.ProviderType
+import project.backend.global.exception.errorcode.ChatRoomErrorCode
 import project.backend.global.exception.ex.ChatRoomException
 import java.time.LocalDateTime
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ChatRoomServiceTests {
 
@@ -175,6 +179,148 @@ class ChatRoomServiceTests {
         }
     }
 
+    @Test
+    fun `채팅방에 참여하지 않은 사용자가 나가려고 하면 예외 발생`() {
+        // given
+        val roomId = 1L
+        val memberId = 2L
+
+        every {
+            chatParticipantRepository.findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+                roomId,
+                memberId
+            )
+        } returns null
+
+        // when & then
+        assertThrows<ChatRoomException> {
+            service.leaveChatRoom(roomId, memberId)
+        }.also {
+            assertEquals(ChatRoomErrorCode.NOT_PARTICIPANT, it.errorCode)
+        }
+    }
+
+    @Test
+    fun `방장이 채팅방을 나가려고 하면 예외 발생`() {
+        // given
+        val roomId = 1L
+        val memberId = 2L
+
+        val member = createMember(id = memberId)
+        val chatRoom = createChatRoom(id = roomId)
+        val ownerParticipant =
+            createParticipant(
+                chatRoom = chatRoom,
+                member = member,
+                owner = true,
+                joinAt = LocalDateTime.now()
+            )
+
+        every {
+            chatParticipantRepository.findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+                roomId,
+                memberId
+            )
+        } returns ownerParticipant
+
+        // when & then
+        assertThrows<ChatRoomException> {
+            service.leaveChatRoom(roomId, memberId)
+        }.also {
+            assertEquals(ChatRoomErrorCode.OWNER_CANNOT_LEAVE, it.errorCode)
+        }
+    }
+
+    @Test
+    fun `방장이 채팅방을 정상적으로 삭제`() {
+        // given
+        val roomId = 1L
+        val memberId = 2L
+
+        val member = createMember(id = memberId)
+        val chatRoom = createChatRoom(id = roomId, name = "DeletingRoom")
+        val ownerParticipant =
+            createParticipant(
+                chatRoom = chatRoom,
+                member = member,
+                owner = true,
+                joinAt = LocalDateTime.now()
+            )
+
+        every {
+            chatParticipantRepository.findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+                roomId,
+                memberId
+            )
+        } returns ownerParticipant
+        every { service.getRoomById(roomId) } returns chatRoom
+        every { eventPublisher.publishEvent(any()) } just Runs
+        every { chatRoomRepository.delete(chatRoom) } just Runs
+
+        // when
+        service.deleteChatRoom(roomId, memberId)
+
+        // then
+        verify {
+            eventPublisher.publishEvent(
+                match<DeleteChatRoomEvent> {
+                    it.roomId == roomId &&
+                            it.roomName == "DeletingRoom"
+                })
+        }
+        verify { chatRoomRepository.delete(chatRoom) }
+    }
+
+    @Test
+    fun `방장이 아닌 사용자가 삭제 시도 시 예외 발생`() {
+        // given
+        val roomId = 1L
+        val memberId = 2L
+
+        val member = createMember(id = memberId)
+        val chatRoom = createChatRoom(id = roomId, name = "DeletingRoom")
+        val ownerParticipant =
+            createParticipant(
+                chatRoom = chatRoom,
+                member = member,
+                owner = false,
+                joinAt = LocalDateTime.now()
+            )
+        every { service.getRoomById(roomId) } returns chatRoom
+        every {
+            chatParticipantRepository.findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+                roomId,
+                memberId
+            )
+        } returns ownerParticipant
+
+        // when & then
+        assertThrows<ChatRoomException> {
+            service.deleteChatRoom(roomId, memberId)
+        }.also {
+            assertEquals(ChatRoomErrorCode.OWNER_PERMISSION_REQUIRED, it.errorCode)
+        }
+    }
+
+    @Test
+    fun `채팅방 참여자가 아닌 사용자가 삭제 시도 시 예외 발생`() {
+        // given
+        val memberId = 100L
+        val roomId = 1L
+        val chatRoom = createChatRoom(id = roomId, name = "DeletingRoom")
 
 
+        every { service.getRoomById(roomId) } returns chatRoom
+        every {
+            chatParticipantRepository.findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+                roomId,
+                memberId
+            )
+        } returns null
+
+        // when & then
+        assertThrows<ChatRoomException> {
+            service.deleteChatRoom(roomId, memberId)
+        }. also { assertEquals(ChatRoomErrorCode.NOT_PARTICIPANT, it.errorCode) }
+    }
 }
