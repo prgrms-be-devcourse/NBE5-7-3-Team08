@@ -32,5 +32,5 @@ data class SignUpRequest (
         min = 4,
         message = "비밀번호는 최소 4자 이상이여야 합니다."
     )
-    var password: String
+    var password: String? = null
 )
