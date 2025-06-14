@@ -37,7 +37,7 @@ class FormLoginTest {
 
     @Test
     fun `form 로그인 성공 시 accessToken 쿠키와 성공 메세지를 반환한다`() {
-//    given
+        //given
         val accessToken = "access-token"
         val refreshToken = "refresh-token"
         val expectedToken = Token(accessToken, refreshToken)
@@ -51,7 +51,7 @@ class FormLoginTest {
         )
         whenever(jwtProvider.generateTokenPair(any())).thenReturn(expectedToken)
 
-//    when & then
+        //when & then
         val expectedMsg = "로그인 성공"
         mockMvc.perform(
             post("/login")
@@ -73,6 +73,8 @@ class FormLoginTest {
         val expectedUser = createUser(username, correctPassword)
 
         val wrongPassword = "wrong"
+        val expectedErrorMsg = "ID 또는 비밀번호가 일치하지 않습니다. 다시 확인해 주십시오."
+        val expectedErrorCode = "LE-001"
 
         whenever(loginService.loadUserByUsername(username)).thenReturn(expectedUser)
 
@@ -85,8 +87,8 @@ class FormLoginTest {
         )
             .andExpect(status().isUnauthorized) //401
             .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$.message").value("ID 또는 비밀번호가 일치하지 않습니다. 다시 확인해 주십시오."))
-            .andExpect(jsonPath("$.code").value("LE-001"))
+            .andExpect(jsonPath("$.message").value(expectedErrorMsg))
+            .andExpect(jsonPath("$.code").value(expectedErrorCode))
     }
 
     private fun createUser(username: String, password: String): MemberDetails {
