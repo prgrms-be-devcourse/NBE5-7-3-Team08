@@ -10,7 +10,7 @@ class Member (
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
-    val id: Long? = null,
+    var id: Long? = null,
 
     @Column(nullable = false, unique = true)
     var username: String,
