@@ -28,24 +28,16 @@ class FormFailureHandler : AuthenticationFailureHandler {
         exception: AuthenticationException
     ) {
         val loginErrorCode = getLoginErrorCode(exception)
-        log.info { "${loginErrorCode.code}, ${loginErrorCode.message}" }
         val errorResponse = toResponse(loginErrorCode)
 
         val json = ObjectMapper().writeValueAsString(errorResponse)
-//
-//        response.apply {
-//            status = loginErrorCode.status.value()
-//            contentType = "application/json"
-//            characterEncoding = "UTF-8"
-//            writer.write(json)
-//        }
 
-        response.status = loginErrorCode.status.value()
-        response.contentType = "application/json"
-        response.characterEncoding = "UTF-8"
-
-        response.writer.write(json)
-        response.writer.flush() //이거 왜있음?
+        response.apply {
+            status = loginErrorCode.status.value()
+            contentType = "application/json"
+            characterEncoding = "UTF-8"
+            writer.write(json)
+        }
     }
 
     private fun getLoginErrorCode(exception: AuthenticationException): ErrorCode =

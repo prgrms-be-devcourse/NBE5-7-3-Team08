@@ -12,12 +12,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import project.backend.auth.dto.CustomOAuth2User
 import project.backend.auth.dto.OAuth2Attribute
-import project.backend.domain.chat.github.GitHubClient
 
 @Service
 @Transactional
 class CustomOAuth2UserService(
-    private val gitHubClient: GitHubClient
 ) : OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private val log = KotlinLogging.logger {}
@@ -29,13 +27,15 @@ class CustomOAuth2UserService(
         val accessToken = userRequest.accessToken.tokenValue
         val registrationId = userRequest.clientRegistration.registrationId
 
-        val userNameAttributeName = userRequest.clientRegistration.providerDetails.userInfoEndpoint.userNameAttributeName
+        val userNameAttributeName =
+            userRequest.clientRegistration.providerDetails.userInfoEndpoint.userNameAttributeName
 
         log.info { "userNameAttributeName = $userNameAttributeName" }
 
         val customOAuth2User = CustomOAuth2User(oAuth2User, accessToken)
 
-        val oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName, customOAuth2User.attributes)
+        val oAuth2Attribute =
+            OAuth2Attribute.of(registrationId, userNameAttributeName, customOAuth2User.attributes)
         val memberAttribute = oAuth2Attribute.convertToMap()
 
         return DefaultOAuth2User(

@@ -21,7 +21,7 @@ import project.backend.domain.member.entity.ProviderType
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class formLoginTest {
+class FormLoginTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc
@@ -66,7 +66,7 @@ class formLoginTest {
     }
 
     @Test
-    fun `form 로그인 실패 시 401 상태와 실패 메시지를 반환한다`() {
+    fun `form 로그인 실패 시 401 상태코드와 실패 메세지를 반환한다`() {
         //given
         val username = "jeeun5482"
         val correctPassword = "1234"
@@ -85,6 +85,8 @@ class formLoginTest {
         )
             .andExpect(status().isUnauthorized) //401
             .andExpect(content().contentType("application/json;charset=UTF-8"))
+            .andExpect(jsonPath("$.message").value("ID 또는 비밀번호가 일치하지 않습니다. 다시 확인해 주십시오."))
+            .andExpect(jsonPath("$.code").value("LE-001"))
     }
 
     private fun createUser(username: String, password: String): MemberDetails {
