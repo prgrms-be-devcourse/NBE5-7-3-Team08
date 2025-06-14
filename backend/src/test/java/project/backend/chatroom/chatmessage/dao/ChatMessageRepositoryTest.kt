@@ -104,8 +104,7 @@ class ChatMessageRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByIdIn - 존재하는 ID 리스트로 조회")
-    fun testFindByIdIn_WithExistingIds() {
+    fun 존재하는_ID_리스트로_조회() {
         // given
         val ids = listOf(testMessage1.id!!, testMessage2.id!!)
 
@@ -121,8 +120,7 @@ class ChatMessageRepositoryTest {
 
 
     @Test
-    @DisplayName("findByChatRoomIdOrderByIdDesc - 특정 채팅방의 메시지를 ID 내림차순으로 조회")
-    fun testFindByChatRoomIdOrderByIdDesc_Success() {
+    fun 특정_채팅방_메시지를_ID_내림차순으로_조회() {
         // given
         val roomId = testChatRoom1.id!!
         val pageable = PageRequest.of(0, 10)
@@ -132,14 +130,13 @@ class ChatMessageRepositoryTest {
 
         // then
         assertThat(result).hasSize(2)
-        // ID 내림차순으로 정렬되어 있는지 확인
+
         assertThat(result[0].id).isGreaterThan(result[1].id)
         assertThat(result.map { it.content }).containsExactly("두 번째 메시지", "첫 번째 메시지")
     }
 
     @Test
-    @DisplayName("findByChatRoomIdOrderByIdDesc - 메시지가 없는 채팅방 조회")
-    fun testFindByChatRoomIdOrderByIdDesc_EmptyRoom() {
+    fun 메시지가_없는_채팅방_조회() {
         // given
         val emptyRoom = ChatRoom(
             name = "빈 채팅방",
@@ -158,11 +155,10 @@ class ChatMessageRepositoryTest {
 
 
     @Test
-    @DisplayName("findByChatRoomIdAndIdLessThanOrderByIdDesc - 커서보다 작은 ID의 메시지들 조회")
-    fun testFindByChatRoomIdAndIdLessThanOrderByIdDesc_Success() {
+    fun 커서보다_작은_ID의_메시지들_조회() {
         // given
         val roomId = testChatRoom1.id!!
-        val cursor = testMessage2.id!! // 두 번째 메시지의 ID를 커서로 사용
+        val cursor = testMessage2.id!!
         val pageable = PageRequest.of(0, 10)
 
         // when
@@ -175,11 +171,10 @@ class ChatMessageRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByChatRoomIdAndIdLessThanOrderByIdDesc - 커서보다 작은 메시지가 없는 경우")
-    fun testFindByChatRoomIdAndIdLessThanOrderByIdDesc_NoMessagesBeforeCursor() {
+    fun 커서보다_작은_메시지가_없는_경우() {
         // given
         val roomId = testChatRoom1.id!!
-        val cursor = testMessage1.id!! // 가장 오래된 메시지의 ID를 커서로 사용
+        val cursor = testMessage1.id!!
         val pageable = PageRequest.of(0, 10)
 
         // when
@@ -190,10 +185,8 @@ class ChatMessageRepositoryTest {
     }
 
 
-
     @Test
-    @DisplayName("다른 채팅방의 메시지는 조회되지 않는지 확인")
-    fun testChatRoomIsolation() {
+    fun 다른_채팅방의_메시지는_조회되지_않는지_확인() {
         // given
         val room1Id = testChatRoom1.id!!
         val room2Id = testChatRoom2.id!!
