@@ -33,10 +33,10 @@ class MemberService (
     private val passwordEncoder: PasswordEncoder,
     private val eventPublisher: ApplicationEventPublisher,
 
-){
     @Value("\${file.images.profile.default}")
-    private lateinit var defaultProfileImg: String
+    private val defaultProfileImg: String
 
+){
     fun saveMember(request: SignUpRequest): MemberResponse {
         if (checkUsernameAlreadyExists(request.username)) {
             throw MemberException(MemberErrorCode.USERNAME_ALREADY_EXISTS)
