@@ -44,12 +44,6 @@ class FormSuccessHandler(
             writer.write("""{"message":"로그인 성공"}""")
         }
 
-//        response.status = HttpServletResponse.SC_OK
-//        response.contentType = "application/json"
-//        response.characterEncoding = "UTF-8"
-//
-//        response.writer
-//            .write("{\"message\":\"" + "로그인 성공" + "\"}")
         log.info { "로그인 성공: ${authentication.name}" }
     }
 }

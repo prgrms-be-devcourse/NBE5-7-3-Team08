@@ -2,6 +2,7 @@ package project.backend.global.security.handler.form
 
 //import project.backend.global.exception.ex.BaseException.errorCode
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.BadCredentialsException
@@ -19,6 +20,8 @@ import project.backend.global.exception.ex.AuthException
 @Component
 class FormFailureHandler : AuthenticationFailureHandler {
 
+    private val log = KotlinLogging.logger {}
+
     override fun onAuthenticationFailure(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -35,13 +38,6 @@ class FormFailureHandler : AuthenticationFailureHandler {
             characterEncoding = "UTF-8"
             writer.write(json)
         }
-
-//        response.status = loginErrorCode.status.value()
-//        response.contentType = "application/json"
-//        response.characterEncoding = "UTF-8"
-//
-//        response.writer.write(json)
-//        response.writer.flush() //이거 왜있음?
     }
 
     private fun getLoginErrorCode(exception: AuthenticationException): ErrorCode =

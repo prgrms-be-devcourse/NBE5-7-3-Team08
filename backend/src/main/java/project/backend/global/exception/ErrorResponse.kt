@@ -4,8 +4,8 @@ import org.springframework.validation.FieldError
 import project.backend.global.exception.errorcode.ErrorCode
 
 data class ErrorResponse(
-    private val code: String,
-    private val message: String?
+    val code: String,
+    val message: String?
 ) {
     companion object {
         fun toResponse(errorCode: ErrorCode): ErrorResponse =

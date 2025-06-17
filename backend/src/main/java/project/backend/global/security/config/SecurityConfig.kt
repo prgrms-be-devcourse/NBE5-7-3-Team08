@@ -73,6 +73,6 @@ class SecurityConfig(
             .exceptionHandling {
                 it.authenticationEntryPoint(restAuthenticationEntryPoint)
             }
-            .addFilterAfter(jwtAuthenticationFilter, ExceptionTranslationFilter::class.java) //fixme
+            .addFilterAfter(jwtAuthenticationFilter, ExceptionTranslationFilter::class.java)
             .build()
 }
