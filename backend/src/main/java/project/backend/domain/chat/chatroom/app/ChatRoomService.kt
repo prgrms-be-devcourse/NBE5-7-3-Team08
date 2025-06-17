@@ -193,7 +193,7 @@ class ChatRoomService @Autowired constructor(
         updateRecentRoomAfterLeaving(memberId)
     }
 
-    private fun updateRecentRoomAfterLeaving(memberId: Long) {
+    fun updateRecentRoomAfterLeaving(memberId: Long) {
         val member = memberService.getMemberById(memberId)
 
         val mostRecentActiveRoom = chatParticipantRepository

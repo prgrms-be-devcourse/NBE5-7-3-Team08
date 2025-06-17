@@ -21,6 +21,7 @@ class GitHubBotInitializer(
 
     @PostConstruct
     fun init() {
+
         val gitHubBot = Member(
             username = githubUsername,
             nickname = githubUsername,
